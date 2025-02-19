@@ -1,0 +1,7 @@
+{
+  "name": "topic-list",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
