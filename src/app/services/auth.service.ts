@@ -28,7 +28,6 @@ export class AuthService {
         throw new Error("Please verify your email before logging in!");
       }
   
-      // Redirection vers la page des topics après une connexion réussie
       await this.router.navigate(['/topics']);
     } catch (error) {
       throw error;
@@ -40,10 +39,9 @@ export class AuthService {
       const result = await createUserWithEmailAndPassword(this.auth, email, password);
       await sendEmailVerification(result.user);
       await signOut(this.auth);
-      // Utiliser le router injecté au lieu de inject(Router)
       await this.router.navigate(['/login']);
     } catch (error: any) {
-      console.error('Registration error:', error); // Pour le debugging
+      console.error('Registration error:', error); 
       if (error.code === 'auth/email-already-in-use') {
         throw new Error('Email already in use');
       } else if (error.code === 'auth/weak-password') {
@@ -62,13 +60,5 @@ export class AuthService {
       throw error;
     }
   }
-  async logout(): Promise<void> {
-    try {
-      await signOut(this.auth);
-    } catch (error) {
-      throw error;
-    }
-  }
-
 }
 
