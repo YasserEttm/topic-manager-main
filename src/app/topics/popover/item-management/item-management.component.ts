@@ -17,8 +17,8 @@ addIcons({ trash, pencil });
           <ion-label>Edit</ion-label>
           <ion-icon slot="end" name="pencil"></ion-icon>
         </ion-item>
-        <ion-item [button]="true" [detail]="false">
-          <ion-label color="danger" (click)="remove()">Delete</ion-label>
+        <ion-item [button]="true" [detail]="false"  (click)="remove()">
+          <ion-label color="danger">Delete</ion-label>
           <ion-icon color="danger" slot="end" name="trash"></ion-icon>
         </ion-item>
       </ion-list>

@@ -4,8 +4,8 @@ import { AuthService } from './services/auth.service';
 import { map } from 'rxjs';
 
 export const routes: Routes = [
-  {
-    canActivate: [
+ {
+     canActivate: [
       () => {
         const _authService = inject (AuthService);
         const _router = inject (Router);
@@ -39,4 +39,8 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/login/login.page').then( m => m.LoginPage)
   },
 
+  {
+    path: 'register',
+    loadComponent: () => import('./auth/register/register.component').then( m => m.RegisterComponent)
+  },
 ];

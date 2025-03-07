@@ -1,0 +1,34 @@
+// auth-common.scss
+ion-card {
+  border-radius: 15px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  margin: 16px;
+  min-height: 420px; // Ajustez cette valeur pour qu'elle corresponde à la hauteur de votre formulaire de login
+  display: flex;
+  flex-direction: column;
+}
+
+ion-card-content {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  margin-bottom: 16px;
+}
+
+.form-buttons {
+  margin-top: auto;
+  padding-top: 24px;
+}
