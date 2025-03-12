@@ -11,27 +11,15 @@ import { CreateTopicModal } from './modals/create-topic/create-topic.component';
 import { ItemManagementPopover } from './popover/item-management/item-management.component';
 import { Topic } from '../models/topic';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { NavbarComponent } from "../shared/navbar/navbar.component";
 
 addIcons({ addOutline, chevronForward, ellipsisVertical });
 
 @Component({
   selector: 'app-home',
   template: `
-    <ion-header [translucent]="true">
-      <ion-toolbar>
-        <ion-breadcrumbs>
-          <ion-breadcrumb routerLink="">Topics</ion-breadcrumb>
-        </ion-breadcrumbs>
-      </ion-toolbar>
-    </ion-header>
-
+    <app-navbar [pageTitle]="'Topics'"></app-navbar>
     <ion-content [fullscreen]="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Topics</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
       <ion-list>
         @for(topic of topics(); track topic.id) {
         <ion-item>
@@ -83,7 +71,7 @@ addIcons({ addOutline, chevronForward, ellipsisVertical });
       }
     `,
   ],
-  imports: [IonicModule, CommonModule, RouterLink],
+  imports: [IonicModule, CommonModule, RouterLink, NavbarComponent],
 })
 export class TopicsPage {
   private readonly topicService = inject(TopicService);
