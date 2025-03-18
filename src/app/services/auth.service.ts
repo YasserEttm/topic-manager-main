@@ -60,5 +60,12 @@ export class AuthService {
       throw error;
     }
   }
-}
 
+async logout(): Promise<void> {
+  try {
+    await signOut(this.auth);
+  } catch (error) {
+    throw error;
+  }
+}
+}
