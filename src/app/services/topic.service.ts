@@ -2,7 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { Topic, Topics } from '../models/topic';
 import { Post } from '../models/post';
 import { generateUUID } from '../utils/generate-uuid';
-import { BehaviorSubject, map, Observable, of, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, of, switchMap, tap } from 'rxjs';
+import { AuthService } from 'src/app/services/auth.service';
 import {
   Firestore,
   collection,
@@ -20,19 +21,31 @@ import {
 })
 export class TopicService {
   private firestore = inject(Firestore);
+  private authService = inject(AuthService);
   topicsCollection = collection(this.firestore, 'topics');
   //doc(topicsCollection);
 
-  private _topics: BehaviorSubject<Topics> = new BehaviorSubject([
-    { id: '1', name: 'Topic 1', posts: [{ id: '1', name: 'Post 1' }] },
-    { id: '2', name: 'Topic 2', posts: [] },
-  ]);
-
   getAll(): Observable<Topics> {
     //query(this.topicsCollection, where('owner', '==',uid));
-    return (collectionData(this.topicsCollection) as Observable<Topic[]>).pipe(
-      tap(console.log)
-    );
+    const user$ = this.authService.getConnectedUser();
+
+    return user$.pipe(
+      switchMap((user) => {
+        const whereUserIsOwnerTopics = query(
+          this.topicsCollection,
+          where('owner', '==', user?.email)
+        );
+        return (collectionData(whereUserIsOwnerTopics, {
+          idField: 'id',
+        }) as Observable<Topic[]>).pipe(map(topics => topics.map(topic => {
+          const {name, id, ...topicLight} = topic;
+          return {
+            ...topic,
+            isOwner: true
+          }
+        })))
+      })
+    )
   }
 
   getById(topicId: string): Observable<Topic | undefined> {
