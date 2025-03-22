@@ -34,6 +34,14 @@ export const routes: Routes = [
     redirectTo: 'topics',
     pathMatch: 'full',
   },
+
+  {
+    path: 'topics/:topicId/posts/:postId', // New route for posts
+    loadComponent: () =>
+      import('./topics/post-details/PostDetailsPage').then(
+        (m) => m.PostDetailsPage
+      ),
+  },
   {
     path: 'login',
     loadComponent: () => import('./auth/login/login.page').then( m => m.LoginPage)

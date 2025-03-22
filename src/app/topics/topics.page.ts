@@ -102,7 +102,7 @@ export class TopicsPage {
       data: { action },
     } = await popover.onDidDismiss();
 
-    if (action === 'remove') this.topicService.removeTopic(topic);
+    if (action === 'remove') this.topicService.removeTopic(topic.id);
     else if (action === 'edit') this.openModal(topic);
   }
 }

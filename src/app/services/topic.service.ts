@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Topic, Topics } from '../models/topic';
 import { Post } from '../models/post';
 import { generateUUID } from '../utils/generate-uuid';
-import { BehaviorSubject, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
 import {
   Firestore,
@@ -56,7 +56,7 @@ export class TopicService {
 
   getById(id: string): Observable<Topic | undefined> {
     const topicDoc = doc(this.firestore, 'topics', id);
-  
+
     return docData(topicDoc, { idField: 'id' }).pipe(
       map((topic: DocumentData | undefined) => {
         if (topic) {
@@ -71,27 +71,27 @@ export class TopicService {
       })
     );
   }
-  
-  
+
+
 
   addTopic(name: string, posts: Post[]): Observable<Topic> {
     const user$ = this.authService.getConnectedUser();
-  
+
     return user$.pipe(
       switchMap((user) => {
-        const topicId = generateUUID();  
-  
+        const topicId = generateUUID();
+
         const newTopic: Topic = {
           id: topicId,
           name,
           posts,
-          owner: user?.email || '', 
+          owner: user?.email || '',
           readers: [],
           writers: [],
         };
-  
+
         const topicRef = doc(this.firestore, 'topics', topicId);
-  
+
         return from(setDoc(topicRef, { ...newTopic })).pipe(
           map(() => newTopic)
         );
@@ -101,14 +101,14 @@ export class TopicService {
 
   addReader(topicId: string, readerEmail: string): Observable<void> {
     const user$ = this.authService.getConnectedUser();
-  
+
     return user$.pipe(
       switchMap((user) => {
         if (user?.email !== undefined) {
           const topicRef = doc(this.firestore, 'topics', topicId);
-          
+
           return from(updateDoc(topicRef, {
-            readers: arrayUnion(readerEmail)  
+            readers: arrayUnion(readerEmail)
           }));
         }
         return of();
@@ -117,12 +117,12 @@ export class TopicService {
   }
   removeReader(topicId: string, readerEmail: string): Observable<void> {
     const user$ = this.authService.getConnectedUser();
-  
+
     return user$.pipe(
       switchMap((user) => {
         if (user?.email !== undefined) {
           const topicRef = doc(this.firestore, 'topics', topicId);
-  
+
           return from(updateDoc(topicRef, {
             readers: arrayRemove(readerEmail)
           }));
@@ -133,14 +133,14 @@ export class TopicService {
   }
   addWriter(topicId: string, writerEmail: string): Observable<void> {
     const user$ = this.authService.getConnectedUser();
-  
+
     return user$.pipe(
       switchMap((user) => {
         if (user?.email !== undefined) {
           const topicRef = doc(this.firestore, 'topics', topicId);
-          
+
           return from(updateDoc(topicRef, {
-            writers: arrayUnion(writerEmail)  
+            writers: arrayUnion(writerEmail)
           }));
         }
         return of();
@@ -149,14 +149,14 @@ export class TopicService {
   }
   removeWriter(topicId: string, writerEmail: string): Observable<void> {
     const user$ = this.authService.getConnectedUser();
-  
+
     return user$.pipe(
       switchMap((user) => {
         if (user?.email !== undefined) {
           const topicRef = doc(this.firestore, 'topics', topicId);
-  
+
           return from(updateDoc(topicRef, {
-            writers: arrayRemove(writerEmail)  
+            writers: arrayRemove(writerEmail)
           }));
         }
         return of();
@@ -166,24 +166,24 @@ export class TopicService {
 
   editTopic(topicId: string, updates: Partial<Omit<Topic, 'id' | 'owner'>>): Observable<void> {
     const user$ = this.authService.getConnectedUser();
-  
+
     return user$.pipe(
       switchMap((user) => {
         if (!user?.email) return throwError(() => new Error('User not authenticated'));
-  
+
         const topicRef = doc(this.firestore, 'topics', topicId);
-  
+
         return from(getDoc(topicRef)).pipe(
           switchMap((topicSnapshot) => {
             if (!topicSnapshot.exists()) {
               return throwError(() => new Error('Topic not found'));
             }
-  
+
             const topicData = topicSnapshot.data() as Topic;
-  
+
             if (topicData.owner !== user.email && !(topicData.writers || []).includes(user.email ?? '')) {
               return throwError(() => new Error('Permission denied'));
-            }            
+            }
 
             return from(updateDoc(topicRef, updates));
           })
@@ -191,75 +191,131 @@ export class TopicService {
       })
     );
   }
-  
+
 
   removeTopic(topicId: string): Observable<void> {
     const user$ = this.authService.getConnectedUser();
-  
+
     return user$.pipe(
       switchMap((user) => {
         if (!user?.email) return throwError(() => new Error('User not authenticated'));
-  
+
         const topicRef = doc(this.firestore, 'topics', topicId);
-  
+
         return from(getDoc(topicRef)).pipe(
           switchMap((topicSnapshot) => {
             if (!topicSnapshot.exists()) {
               return throwError(() => new Error('Topic not found'));
             }
-  
+
             const topicData = topicSnapshot.data() as Topic;
-  
+
             if (topicData.owner !== user.email) {
               return throwError(() => new Error('Permission denied: Only the owner can delete this topic'));
             }
-  
+
             return from(deleteDoc(topicRef));
           })
         );
       })
     );
   }
-  
 
-  addPost(topicId: string, post: Omit<Post, 'id'>): void {
-    this._topics.next(
-      this._topics.value.map((topic) =>
-        topic.id === topicId
-          ? {
-              ...topic,
-              posts: [...topic.posts, { ...post, id: generateUUID() }],
-            }
-          : topic
-      )
+  getPostById(topicId: string, postId: string): Observable<Post | undefined> {
+    const topicRef = doc(this.firestore, 'topics', topicId);
+
+    return docData(topicRef).pipe(
+      map((topic: DocumentData | undefined) => {
+        if (topic) {
+          const posts = topic['posts'] as Post[];
+          return posts.find((post) => post.id === postId);
+        }
+        return undefined;
+      })
     );
   }
 
-  editPost(topicId: string, post: Post): void {
-    this._topics.next(
-      this._topics.value.map((topic) =>
-        topic.id === topicId
-          ? {
-              ...topic,
-              posts: topic.posts.map((_post) =>
-                _post.id === post.id ? { ...post, id: _post.id } : _post
-              ),
-            }
-          : topic
-      )
+  addPost(topicId: string, post: Omit<Post, 'id'>): Observable<void> {
+    const user$ = this.authService.getConnectedUser();
+
+    return user$.pipe(
+      switchMap((user) => {
+        if (!user?.email) return throwError(() => new Error('User not authenticated'));
+
+        const topicRef = doc(this.firestore, 'topics', topicId);
+        const postId = generateUUID();
+        const newPost: Post = { ...post, id: postId };
+
+        return from(updateDoc(topicRef, {
+          posts: arrayUnion(newPost)
+        }));
+      })
     );
   }
 
-  removePost(topicId: string, post: Post): void {
-    this._topics.next(
-      this._topics.value.map((topic) =>
-        topic.id === topicId
-          ? {
-              ...topic,
-              posts: topic.posts.filter((_post) => _post.id !== post.id),
+
+  editPost(topicId: string, post: Post): Observable<void> {
+    const user$ = this.authService.getConnectedUser();
+
+    return user$.pipe(
+      switchMap((user) => {
+        if (!user?.email) return throwError(() => new Error('User not authenticated'));
+
+        const topicRef = doc(this.firestore, 'topics', topicId);
+
+        return from(getDoc(topicRef)).pipe(
+          switchMap((topicSnapshot) => {
+            if (!topicSnapshot.exists()) {
+              return throwError(() => new Error('Topic not found'));
             }
-          : topic
-      )
+
+            const topicData = topicSnapshot.data() as Topic;
+            const updatedPosts = topicData.posts.map((_post) =>
+              _post.id === post.id ? { ...post } : _post
+            );
+
+            return from(updateDoc(topicRef, { posts: updatedPosts }));
+          })
+        );
+      })
+    );
+  }
+  removePost(topicId: string, post: Post): Observable<void> {
+    const user$ = this.authService.getConnectedUser();
+
+    return user$.pipe(
+      switchMap((user) => {
+        if (!user?.email) {
+          console.error('User not authenticated');
+          return throwError(() => new Error('User not authenticated'));
+        }
+
+        const topicRef = doc(this.firestore, 'topics', topicId);
+
+        return from(getDoc(topicRef)).pipe(
+          switchMap((topicSnapshot) => {
+            if (!topicSnapshot.exists()) {
+              console.error('Topic not found');
+              return throwError(() => new Error('Topic not found'));
+            }
+
+            const topicData = topicSnapshot.data() as Topic;
+            const updatedPosts = topicData.posts.filter((_post) => _post.id !== post.id);
+
+            console.log('Updated posts:', updatedPosts);
+
+            // Mettre à jour le document Firestore avec le nouveau tableau de posts
+            return from(updateDoc(topicRef, { posts: updatedPosts }));
+          }),
+          tap(() => {
+            console.log('Post removed successfully');
+          }),
+          catchError((err) => {
+            console.error('Failed to remove post:', err);
+            return throwError(() => err);
+          })
+        );
+      })
     );
   }
 }

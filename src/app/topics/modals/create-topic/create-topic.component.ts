@@ -107,16 +107,27 @@ export class CreateTopicModal implements OnInit {
 
   onSubmit(): void {
     if (this.topic?.id) {
-      this.topicService.editTopic({
-        ...this.topic,
+      // Edit existing topic
+      this.topicService.editTopic(this.topic.id, {
         name: this.topicForm.value.name!,
+      }).subscribe({
+        next: () => {
+          this.modalCtrl.dismiss();
+        },
+        error: (err) => {
+          console.error('Failed to edit topic:', err);
+        },
       });
     } else {
-      this.topicService.addTopic({
-        name: this.topicForm.value.name!,
+      // Add new topic
+      this.topicService.addTopic(this.topicForm.value.name!, []).subscribe({
+        next: () => {
+          this.modalCtrl.dismiss();
+        },
+        error: (err) => {
+          console.error('Failed to add topic:', err);
+        },
       });
     }
-
-    this.modalCtrl.dismiss();
   }
 }

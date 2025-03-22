@@ -120,7 +120,19 @@ export class TopicDetailsPage {
 
     console.log(action);
 
-    if (action === 'remove') this.topicService.removePost(this.topicId, post);
-    else if (action === 'edit') this.openModal(post);
+    if (action === 'remove') {
+      this.topicService.removePost(this.topicId, post).subscribe({
+        next: () => {
+          console.log('Post removed successfully');
+          // Mettre à jour la liste des posts après suppression
+          this.topic = toSignal(this.topicService.getById(this.topicId));
+        },
+        error: (err) => {
+          console.error('Failed to remove post:', err);
+        },
+      });
+    } else if (action === 'edit') {
+      this.openModal(post);
+    }
   }
 }

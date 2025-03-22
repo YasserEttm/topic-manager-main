@@ -133,17 +133,32 @@ export class CreatePostModal implements OnInit {
 
   onSubmit(): void {
     if (this.post?.id) {
+      // Edit existing post
       this.topicService.editPost(this.topicId, {
         ...this.post,
         name: this.postForm.value.name!,
+        description: this.postForm.value.description!,
+      }).subscribe({
+        next: () => {
+          this.modalCtrl.dismiss();
+        },
+        error: (err) => {
+          console.error('Failed to edit post:', err);
+        },
       });
     } else {
+      // Add new post
       this.topicService.addPost(this.topicId, {
         name: this.postForm.value.name!,
         description: this.postForm.value.description!,
+      }).subscribe({
+        next: () => {
+          this.modalCtrl.dismiss();
+        },
+        error: (err) => {
+          console.error('Failed to add post:', err);
+        },
       });
     }
-
-    this.modalCtrl.dismiss();
   }
 }
