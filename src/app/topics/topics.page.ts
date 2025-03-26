@@ -12,6 +12,9 @@ import { ItemManagementPopover } from './popover/item-management/item-management
 import { Topic } from '../models/topic';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavbarComponent } from "../shared/navbar/navbar.component";
+import { ToastController } from '@ionic/angular';
+import { AddReaderModal } from './modals/add-reader-modal/add-reader-modal.component';
+
 
 addIcons({ addOutline, chevronForward, ellipsisVertical });
 
@@ -77,6 +80,7 @@ export class TopicsPage {
   private readonly topicService = inject(TopicService);
   private readonly modalCtrl = inject(ModalController);
   private readonly popoverCtrl = inject(PopoverController);
+  private readonly toastCtrl = inject(ToastController);
 
   topics = toSignal(this.topicService.getAll());
 
@@ -90,19 +94,49 @@ export class TopicsPage {
     await modal.onDidDismiss();
   }
 
+  async presentToast(message: string, color: 'success' | 'danger') {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2000,
+      color,
+    });
+    await toast.present();
+  }
+
+
+  async openAddReaderModal(topic: Topic) {
+    const modal = await this.modalCtrl.create({
+      component: AddReaderModal,
+      componentProps: { topicId: topic.id },
+    });
+  
+    await modal.present();
+  
+    const { data } = await modal.onDidDismiss();
+    if (data?.email) {
+      this.topicService.addReader(topic.id, data.email);
+    }
+  }
+  
+  
   async presentTopicManagementPopover(event: Event, topic: Topic) {
     const popover = await this.popoverCtrl.create({
       component: ItemManagementPopover,
       event,
     });
-
+  
     await popover.present();
-
-    const {
-      data: { action },
-    } = await popover.onDidDismiss();
-
-    if (action === 'remove') this.topicService.removeTopic(topic.id);
-    else if (action === 'edit') this.openModal(topic);
+  
+    const { data } = await popover.onDidDismiss();
+    if (!data) return;
+  
+    if (data.action === 'remove') {
+      this.topicService.removeTopic(topic.id);
+    } else if (data.action === 'edit') {
+      this.openModal(topic);
+    } else if (data.action === 'addReaders') {
+      this.openAddReaderModal(topic);
+    }    
   }
+  
 }
