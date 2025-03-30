@@ -1,1 +1,36 @@
 @import '../common.scss';
+
+.login-container {
+  @include auth-container;
+  @include responsive-container;
+}
+
+.title {
+  @include responsive-title;
+}
+
+.logo {
+  @include responsive-logo;
+}
+
+.login-button {
+  @include auth-button;
+}
+
+.forgot-password {
+  text-align: right;
+  margin-top: 4px;
+
+  ion-button {
+    --color: var(--accent-color);
+    font-size: 14px;
+    font-weight: 400;
+    text-transform: none;
+    --padding-start: 0;
+    --padding-end: 0;
+  }
+}
+
+.signup-link {
+  @include auth-link;
+}

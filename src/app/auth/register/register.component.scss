@@ -1,1 +1,22 @@
 @import '../common.scss';
+
+.register-container {
+  @include auth-container;
+  @include responsive-container;
+}
+
+.title {
+  @include responsive-title;
+}
+
+.logo {
+  @include responsive-logo;
+}
+
+.register-button {
+  @include auth-button;
+}
+
+.login-link {
+  @include auth-link;
+}

@@ -1,66 +1,63 @@
-<ion-content [fullscreen]="true" class="ion-padding">
-  <ion-card>
-    <ion-card-content>
-      <form [formGroup]="registerForm" (ngSubmit)="onRegister()">
-        <div class="form-fields">
-          <ion-item>
+<ion-content class="ion-padding">
+  <div class="register-container">
+    <div class="logo-container">
+      <img src="assets/img/logo.svg" alt="App Logo" class="logo">
+      <h1 class="title">Create Your Account</h1>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onRegister()">
+      <div class="form-fields">
+        <div class="input-container">
+          <ion-item class="custom-input">
             <ion-label position="floating">Email</ion-label>
             <ion-input type="email" formControlName="email"></ion-input>
           </ion-item>
-          <div class="error-container" *ngIf="registerForm.get('email')?.touched">
-            <div class="error-message" *ngIf="registerForm.get('email')?.hasError('required')">
-              Email est requis
-            </div>
-            <div class="error-message" *ngIf="registerForm.get('email')?.hasError('email')">
-              Format email invalide
-            </div>
-          </div>
+        </div>
 
-          <ion-item>
-            <ion-label position="floating">Mot de passe</ion-label>
-            <ion-input type="password" formControlName="password"></ion-input>
+        <div class="input-container password-input-container">
+          <ion-item class="custom-input">
+            <ion-label position="floating">Password</ion-label>
+            <ion-input [type]="showPassword ? 'text' : 'password'" formControlName="password"></ion-input>
           </ion-item>
-          <div class="error-container" *ngIf="registerForm.get('password')?.touched">
-            <div class="error-message" *ngIf="registerForm.get('password')?.hasError('required')">
-              Mot de passe requis
-            </div>
-            <div class="error-message" *ngIf="registerForm.get('password')?.hasError('minLength')">
-              Minimum 12 caractères
-            </div>
-            <div class="error-message" *ngIf="registerForm.get('password')?.hasError('pattern')">
-              Le mot de passe doit contenir : majuscule, minuscule, chiffre et caractère spécial
-            </div>
-          </div>
-
-          <ion-item>
-            <ion-label position="floating">Confirmer le mot de passe</ion-label>
-            <ion-input type="password" formControlName="confirmPassword"></ion-input>
-          </ion-item>
-          <div class="error-container" *ngIf="registerForm.get('confirmPassword')?.touched">
-            <div class="error-message" *ngIf="registerForm.hasError('passwordMismatch')">
-              Les mots de passe ne correspondent pas
-            </div>
+          <div class="eye-icon-container" (click)="togglePasswordVisibility('password')">
+            <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'" class="password-toggle"></ion-icon>
           </div>
         </div>
 
-        <div class="form-buttons">
-          <ion-button expand="block" type="submit" [disabled]="registerForm.invalid">
-            S'inscrire
-          </ion-button>
-          
-          <ion-button expand="block" fill="clear" routerLink="/login">
-            Déjà un compte ? Connectez-vous
-          </ion-button>
-          
-          <ion-button expand="block" fill="clear" routerLink="/login">
-            Mot de passe oublié ?
+        <div class="input-container password-input-container">
+          <ion-item class="custom-input">
+            <ion-label position="floating">Confirm Password</ion-label>
+            <ion-input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword"></ion-input>
+          </ion-item>
+          <div class="eye-icon-container" (click)="togglePasswordVisibility('confirmPassword')">
+            <ion-icon [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'" class="password-toggle"></ion-icon>
+          </div>
+        </div>
+
+        <ion-text color="danger" *ngIf="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </ion-text>
+      </div>
+
+      <div class="form-buttons">
+        <ion-button expand="block" type="submit" class="register-button">
+          SIGN UP
+        </ion-button>
+
+        <div class="or-divider">
+          <span>or continue with</span>
+        </div>
+
+        <div class="social-buttons">
+          <ion-button fill="clear" class="social-button" (click)="onGoogleSignIn()">
+            <ion-icon name="logo-google"></ion-icon>
           </ion-button>
         </div>
-      </form>
 
-      <ion-text color="danger" *ngIf="errorMessage">
-        <p>{{ errorMessage }}</p>
-      </ion-text>
-    </ion-card-content>
-  </ion-card>
+        <div class="login-link">
+          <p>Already have an account? <a routerLink="/login">Login</a></p>
+        </div>
+      </div>
+    </form>
+  </div>
 </ion-content>

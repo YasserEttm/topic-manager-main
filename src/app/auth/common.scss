@@ -1,34 +1,182 @@
-// auth-common.scss
-ion-card {
-  border-radius: 15px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-  margin: 16px;
-  min-height: 420px; // Ajustez cette valeur pour qu'elle corresponde à la hauteur de votre formulaire de login
-  display: flex;
-  flex-direction: column;
+/* common.scss */
+:host {
+  --background-color: #f2f8f4;
+  --input-background: #ffffff;
+  --primary-color: #000000;
+  --secondary-color: #666666;
+  --accent-color: #4d7c0f;
 }
 
-ion-card-content {
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+ion-content {
+  --background: var(--background-color);
 }
 
-form {
+// Common container styles
+@mixin auth-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  justify-content: space-between;
+  justify-content: center;
 }
 
-ion-item {
-  --padding-start: 0;
-  --inner-padding-end: 0;
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.form-fields {
+  margin-bottom: 48px;
+}
+
+.input-container {
+  position: relative;
   margin-bottom: 16px;
 }
 
-.form-buttons {
-  margin-top: auto;
-  padding-top: 24px;
+.password-input-container {
+  display: flex;
+  position: relative;
+}
+
+.custom-input {
+  --background: var(--input-background);
+  --border-radius: 8px;
+  --border-color: transparent;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.eye-icon-container {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.password-toggle {
+  font-size: 20px;
+  color: var(--secondary-color);
+}
+
+.error-message {
+  font-size: 14px;
+  margin-top: 8px;
+  display: block;
+}
+
+// Common button styles
+@mixin auth-button {
+  --background: var(--primary-color);
+  --border-radius: 30px;
+  --box-shadow: none;
+  height: 50px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  color: var(--secondary-color);
+  font-size: 14px;
+
+  &:before, &:after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  span {
+    margin: 0 12px;
+  }
+}
+
+.social-buttons {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.social-button {
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 48px;
+  height: 48px;
+  --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  overflow: hidden;
+
+  ion-icon {
+    font-size: 24px;
+    color: #4285F4;
+  }
+}
+
+// Common auth link style
+@mixin auth-link {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--secondary-color);
+
+  a {
+    color: var(--primary-color);
+    font-weight: 500;
+    text-decoration: none;
+  }
+}
+
+// Media queries for responsive design
+@mixin responsive-container {
+  @media (max-width: 480px) {
+    padding: 16px;
+  }
+
+  @media (min-height: 700px) {
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+}
+
+@mixin responsive-title {
+  @media (max-width: 480px) {
+    font-size: 22px;
+  }
+}
+
+@mixin responsive-logo {
+  @media (max-width: 480px) {
+    width: 70px;
+    height: 70px;
+  }
 }
