@@ -1,66 +1,81 @@
-import { inject, Injectable } from '@angular/core';
-import { Auth, User, user, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from '@angular/fire/auth';
+import { Injectable, inject } from '@angular/core';
+import { Auth, User, user, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, signInWithCredential } from '@angular/fire/auth';
 import { Router } from '@angular/router';
+import { Platform } from '@ionic/angular';
 import { Observable } from 'rxjs';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class AuthService {
   private auth = inject(Auth);
   private router = inject(Router);
+  private googleProvider = new GoogleAuthProvider();
+  private platform = inject(Platform);
 
+  constructor() {
+    this.googleProvider.setCustomParameters({ prompt: 'select_account' });
+  }
+
+  // Observateur de l'état d'authentification
   getConnectedUser(): Observable<User | null> {
     return user(this.auth);
   }
 
+  // Connexion email/mot de passe
   async login(email: string, password: string): Promise<void> {
-    try {
-      const result = await signInWithEmailAndPassword(this.auth, email, password);
-
-      if (!result.user.emailVerified) {
-        await signOut(this.auth);
-        throw new Error('Please verify your email before logging in!');
-      }
-
-      await this.router.navigate(['/topics']);
-    } catch (error) {
-      throw error;
+    const result = await signInWithEmailAndPassword(this.auth, email, password);
+    if (!result.user.emailVerified) {
+      await signOut(this.auth);
+      throw new Error('Vérifiez votre email avant de vous connecter');
     }
+    await this.router.navigate(['/topics']);
   }
 
   async register(email: string, password: string): Promise<void> {
+    const result = await createUserWithEmailAndPassword(this.auth, email, password);
+    await sendEmailVerification(result.user);
+    await this.router.navigate(['/login']);
+  }
+
+  async signInWithGoogle(): Promise<void> {
     try {
-      const result = await createUserWithEmailAndPassword(this.auth, email, password);
-      await sendEmailVerification(result.user);
-      await signOut(this.auth);
-      await this.router.navigate(['/login']);
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      if (error.code === 'auth/email-already-in-use') {
-        throw new Error('Email already in use');
-      } else if (error.code === 'auth/weak-password') {
-        throw new Error('Password is too weak');
-      } else if (error.code === 'auth/invalid-credential') {
-        throw new Error('Invalid credentials. Please check your Firebase configuration.');
+      let credential;
+      let isNewUser = false;
+
+      if (this.platform.is('desktop') || this.platform.is('mobileweb')) {
+        const result = await signInWithPopup(this.auth, this.googleProvider);
+        isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+        credential = result.user;
+      } else {
+        const result = await FirebaseAuthentication.signInWithGoogle();
+        if (result.credential?.idToken) {
+          const googleCredential = GoogleAuthProvider.credential(result.credential.idToken);
+          const userCredential = await signInWithCredential(this.auth, googleCredential);
+          isNewUser = userCredential.user.metadata.creationTime === userCredential.user.metadata.lastSignInTime;
+          credential = userCredential.user;
+        }
       }
+
+      if (isNewUser && credential) {
+        await sendEmailVerification(credential);
+        await signOut(this.auth);
+        throw new Error('Vérifiez votre email avant de vous connecter');
+      } else {
+        await this.router.navigate(['/topics']);
+      }
+    } catch (error) {
+      console.error('Google sign-in error:', error);
       throw error;
     }
   }
 
   async resetPassword(email: string): Promise<void> {
-    try {
-      await sendPasswordResetEmail(this.auth, email);
-    } catch (error) {
-      throw error;
-    }
+    await sendPasswordResetEmail(this.auth, email);
   }
 
   async logout(): Promise<void> {
-    try {
-      await signOut(this.auth);
-    } catch (error) {
-      throw error;
-    }
+    await signOut(this.auth);
   }
 }
