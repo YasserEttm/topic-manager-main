@@ -7,6 +7,8 @@ export interface Topic {
   owner?: string;
   readers?: string[];
   writers?: string[];
+  isOwner?: boolean; 
+  isReader?: boolean; 
 }
 
 export type Topics = Topic[];

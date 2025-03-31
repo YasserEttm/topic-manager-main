@@ -4,15 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { TopicService } from 'src/app/services/topic.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ModalController } from '@ionic/angular/standalone';
-import { PopoverController } from '@ionic/angular/standalone';
+import { ModalController, PopoverController, ToastController } from '@ionic/angular';
 import { CreatePostModal } from '../modals/create-post/create-post.component';
 import { Post } from 'src/app/models/post';
 import { addIcons } from 'ionicons';
 import { addOutline, chevronForward, ellipsisVertical } from 'ionicons/icons';
 import { ItemManagementPopover } from '../popover/item-management/item-management.component';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ToastController } from '@ionic/angular';
+import { BehaviorSubject, switchMap } from 'rxjs';
 
 addIcons({ addOutline, chevronForward, ellipsisVertical });
 
@@ -23,8 +21,8 @@ addIcons({ addOutline, chevronForward, ellipsisVertical });
       <ion-toolbar>
         <ion-breadcrumbs>
           <ion-breadcrumb routerLink="">Topics</ion-breadcrumb>
-          <ion-breadcrumb [routerLink]="'#topics/' + topic()?.id">
-            {{ topic()?.name }}
+          <ion-breadcrumb [routerLink]="'#topics/' + (topic$ | async)?.id">
+            {{ (topic$ | async)?.name }}
           </ion-breadcrumb>
         </ion-breadcrumbs>
       </ion-toolbar>
@@ -33,33 +31,33 @@ addIcons({ addOutline, chevronForward, ellipsisVertical });
     <ion-content [fullscreen]="true">
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">{{ topic()?.name }}</ion-title>
+          <ion-title size="large">{{ (topic$ | async)?.name }}</ion-title>
         </ion-toolbar>
       </ion-header>
 
-      <ion-list>
-        @for(post of topic()?.posts; track post.id) {
+      <ion-list *ngIf="(topic$ | async)?.posts?.length; else noDataTemplate">
+        @for(post of (topic$ | async)?.posts; track post.id) {
         <ion-item>
           <ion-button slot="start" (click)="presentPostManagementPopover($event, post)">
             <ion-icon name="ellipsis-vertical" color="medium"></ion-icon>
           </ion-button>
 
-          <!-- Afficher l'image du post si disponible -->
           <ion-thumbnail slot="start" *ngIf="post.imageUrl">
             <img [src]="post.imageUrl" alt="Post image" (error)="handleImageError($event)">
           </ion-thumbnail>
 
           <ion-label>{{ post.name }}</ion-label>
         </ion-item>
-        } @empty {
-        <ion-item lines="none" class="ion-text-center">
-          <ion-label>
-            <ion-img src="assets/img/no_data.svg" alt="No data" class="empty-state-image"></ion-img>
-            <p>No posts yet. Create your first post!</p>
-          </ion-label>
-        </ion-item>
         }
       </ion-list>
+
+      <!-- No Data State -->
+      <ng-template #noDataTemplate>
+        <div class="no-data-container">
+          <img src="assets/img/no_data.svg" alt="No data" class="empty-state-image">
+          <p>No posts yet. Create your first post!</p>
+        </div>
+      </ng-template>
 
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">
         <ion-fab-button (click)="openCreatePostModal()">
@@ -79,9 +77,18 @@ addIcons({ addOutline, chevronForward, ellipsisVertical });
       width: 100%;
       height: 100%;
     }
+    .no-data-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 50vh;
+      text-align: center;
+      color: var(--ion-color-medium);
+    }
     .empty-state-image {
-      max-height: 200px;
-      margin: 0 auto;
+      max-height: 180px;
+      margin-bottom: 10px;
     }
   `],
 
@@ -96,14 +103,21 @@ export class TopicDetailsPage implements OnInit {
   private readonly toastCtrl = inject(ToastController);
 
   topicId = this.route.snapshot.params['id'];
-  topic = toSignal(this.topicService.getById(this.topicId));
+
+  // BehaviorSubject to trigger data refresh
+  private refreshTrigger = new BehaviorSubject<void>(undefined);
+
+  // Topic Observable (auto-refreshes when refreshTrigger emits)
+  topic$ = this.refreshTrigger.pipe(
+    switchMap(() => this.topicService.getById(this.topicId))
+  );
 
   ngOnInit() {
     this.refreshTopicData();
   }
 
   refreshTopicData() {
-    this.topic = toSignal(this.topicService.getById(this.topicId));
+    this.refreshTrigger.next(); // This will trigger a refresh of topic$
   }
 
   handleImageError(event: Event) {
@@ -149,11 +163,11 @@ export class TopicDetailsPage implements OnInit {
 
     const { data } = await popover.onDidDismiss();
 
-    if (data.action === 'remove') {
+    if (data?.action === 'remove') {
       this.topicService.removeTopic(this.topicId).subscribe({
         next: async () => {
-          await this.showToast(`Topic "${this.topic.name}" deleted successfully`, 'success');
-          // Add any UI refresh logic if needed
+          await this.showToast(`Topic deleted successfully`, 'success');
+          this.refreshTopicData();
         },
         error: async (err) => {
           console.error('Failed to remove topic:', err);
@@ -169,9 +183,9 @@ export class TopicDetailsPage implements OnInit {
     const toast = await this.toastCtrl.create({
       message,
       duration: 3000,
-      position: 'top', // You can change it to 'bottom' or 'middle' if needed
-      color, // Green for success, red for error
-      cssClass: 'custom-toast' // Optional, for styling
+      position: 'top',
+      color,
+      cssClass: 'custom-toast'
     });
     await toast.present();
   }

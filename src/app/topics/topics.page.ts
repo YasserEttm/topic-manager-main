@@ -24,37 +24,48 @@ addIcons({ addOutline, chevronForward, ellipsisVertical });
     <app-navbar [pageTitle]="'Topics'"></app-navbar>
     <ion-content [fullscreen]="true">
       <ion-list>
+        <!-- Display My Topics -->
+        <ion-list-header>My Topics</ion-list-header>
         @for(topic of topics(); track topic.id) {
-        <ion-item>
-          <ion-button
-            slot="start"
-            fill="clear"
-            id="click-trigger"
-            (click)="presentTopicManagementPopover($event, topic)"
-            aria-label="open topic management popover"
-            data-cy="open-topic-management-popover"
-            ><ion-icon
-              slot="icon-only"
-              color="medium"
-              name="ellipsis-vertical"
-            ></ion-icon
-          ></ion-button>
+          @if(topic.isOwner) {
+            <ion-item>
+              <ion-button
+                slot="start"
+                fill="clear"
+                (click)="presentTopicManagementPopover($event, topic)"
+                aria-label="open topic management popover"
+                data-cy="open-topic-management-popover"
+              >
+                <ion-icon slot="icon-only" color="medium" name="ellipsis-vertical"></ion-icon>
+              </ion-button>
 
-          <ion-label [routerLink]="['/topics/' + topic.id]">{{
-            topic.name
-          }}</ion-label>
-          <ion-note slot="end">{{ topic.posts.length }}</ion-note>
-          <ion-icon
-            slot="end"
-            [routerLink]="['/topics/' + topic.id]"
-            color="medium"
-            name="chevron-forward"
-          ></ion-icon>
-        </ion-item>
-        } @empty {
-        <ion-img class="image" src="assets/img/no_data.svg" alt=""></ion-img>
+              <ion-label [routerLink]="['/topics/' + topic.id]">{{ topic.name }}</ion-label>
+              <ion-note slot="end">{{ topic.posts.length }}</ion-note>
+              <ion-icon slot="end" [routerLink]="['/topics/' + topic.id]" color="medium" name="chevron-forward"></ion-icon>
+            </ion-item>
+          }
+        }
+
+        <!-- Display Shared with Me Topics -->
+        <ion-list-header>Shared with Me</ion-list-header>
+        @for(topic of topics(); track topic.id) {
+          @if(topic.isReader) {
+            <ion-item>
+              <!-- No management button here for readers -->
+              <ion-label [routerLink]="['/topics/' + topic.id]">{{ topic.name }}</ion-label>
+              <ion-note slot="end">{{ topic.posts.length }}</ion-note>
+              <ion-icon slot="end" [routerLink]="['/topics/' + topic.id]" color="medium" name="chevron-forward"></ion-icon>
+            </ion-item>
+          }
+        }
+
+        <!-- Fallback message if no topics available -->
+        @empty {
+          <ion-img class="image" src="assets/img/no_data.svg" alt=""></ion-img>
         }
       </ion-list>
+      
+      <!-- Floating action button for creating topics -->
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">
         <ion-fab-button
           data-cy="open-create-topic-modal-button"
@@ -76,6 +87,7 @@ addIcons({ addOutline, chevronForward, ellipsisVertical });
   ],
   imports: [IonicModule, CommonModule, RouterLink, NavbarComponent],
 })
+
 export class TopicsPage {
   private readonly topicService = inject(TopicService);
   private readonly modalCtrl = inject(ModalController);
