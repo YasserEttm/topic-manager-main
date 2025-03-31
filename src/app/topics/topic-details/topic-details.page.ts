@@ -12,6 +12,7 @@ import { addIcons } from 'ionicons';
 import { addOutline, chevronForward, ellipsisVertical } from 'ionicons/icons';
 import { ItemManagementPopover } from '../popover/item-management/item-management.component';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ToastController } from '@ionic/angular';
 
 addIcons({ addOutline, chevronForward, ellipsisVertical });
 
@@ -92,6 +93,7 @@ export class TopicDetailsPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly modalCtrl = inject(ModalController);
   private readonly popoverCtrl = inject(PopoverController);
+  private readonly toastCtrl = inject(ToastController);
 
   topicId = this.route.snapshot.params['id'];
   topic = toSignal(this.topicService.getById(this.topicId));
@@ -147,18 +149,30 @@ export class TopicDetailsPage implements OnInit {
 
     const { data } = await popover.onDidDismiss();
 
-    if (data?.action === 'remove') {
-      this.topicService.removePost(this.topicId, post).subscribe({
-        next: () => {
-          console.log('Post removed successfully');
-          this.refreshTopicData();
+    if (data.action === 'remove') {
+      this.topicService.removeTopic(this.topicId).subscribe({
+        next: async () => {
+          await this.showToast(`Topic "${this.topic.name}" deleted successfully`, 'success');
+          // Add any UI refresh logic if needed
         },
-        error: (err) => {
-          console.error('Failed to remove post:', err);
+        error: async (err) => {
+          console.error('Failed to remove topic:', err);
+          await this.showToast('Failed to delete topic', 'danger');
         },
       });
     } else if (data?.action === 'edit') {
       this.openEditPostModal(post);
     }
+  }
+
+  async showToast(message: string, color: 'success' | 'danger' = 'success') {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 3000,
+      position: 'top', // You can change it to 'bottom' or 'middle' if needed
+      color, // Green for success, red for error
+      cssClass: 'custom-toast' // Optional, for styling
+    });
+    await toast.present();
   }
 }

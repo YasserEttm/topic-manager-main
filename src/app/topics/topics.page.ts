@@ -131,12 +131,33 @@ export class TopicsPage {
     if (!data) return;
   
     if (data.action === 'remove') {
-      this.topicService.removeTopic(topic.id);
+      this.topicService.removeTopic(topic.id).subscribe({
+        next: async () => {
+          await this.showToast(`Topic "${topic.name}" deleted successfully`, 'success');
+          // Add any UI refresh logic if needed
+        },
+        error: async (err) => {
+          console.error('Failed to remove topic:', err);
+          await this.showToast('Failed to delete topic', 'danger');
+        },
+      });
     } else if (data.action === 'edit') {
       this.openModal(topic);
     } else if (data.action === 'addReaders') {
       this.openAddReaderModal(topic);
-    }    
+    }
   }
+  
+  async showToast(message: string, color: 'success' | 'danger' = 'success') {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 3000,
+      position: 'top', // You can change it to 'bottom' or 'middle' if needed
+      color, // Green for success, red for error
+      cssClass: 'custom-toast' // Optional, for styling
+    });
+    await toast.present();
+  }
+  
   
 }
