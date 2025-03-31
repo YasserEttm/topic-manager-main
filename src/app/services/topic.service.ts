@@ -4,6 +4,8 @@ import { Post } from '../models/post';
 import { generateUUID } from '../utils/generate-uuid';
 import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
+import { AzureStorageService } from './azure-storage.service';
+
 import {
   Firestore,
   collection,
@@ -19,7 +21,8 @@ import {
   updateDoc,
   arrayUnion,
   getDoc,
-  deleteDoc
+  deleteDoc,
+  DocumentReference
 } from '@angular/fire/firestore';
 
 @Injectable({
@@ -28,11 +31,10 @@ import {
 export class TopicService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
+  private azureStorage = inject(AzureStorageService);
   topicsCollection = collection(this.firestore, 'topics');
-  //doc(topicsCollection);
 
   getAll(): Observable<Topics> {
-    //query(this.topicsCollection, where('owner', '==',uid));
     const user$ = this.authService.getConnectedUser();
 
     return user$.pipe(
@@ -72,9 +74,7 @@ export class TopicService {
     );
   }
 
-
-
-  addTopic(name: string, posts: Post[]): Observable<Topic> {
+  addTopic(name: string, posts: Post[] = []): Observable<Topic> {
     const user$ = this.authService.getConnectedUser();
 
     return user$.pipe(
@@ -87,7 +87,7 @@ export class TopicService {
           posts,
           owner: user?.email || '',
           readers: [],
-          writers: [],
+          writers: []
         };
 
         const topicRef = doc(this.firestore, 'topics', topicId);
@@ -115,6 +115,7 @@ export class TopicService {
       })
     );
   }
+
   removeReader(topicId: string, readerEmail: string): Observable<void> {
     const user$ = this.authService.getConnectedUser();
 
@@ -131,6 +132,7 @@ export class TopicService {
       })
     );
   }
+
   addWriter(topicId: string, writerEmail: string): Observable<void> {
     const user$ = this.authService.getConnectedUser();
 
@@ -147,6 +149,7 @@ export class TopicService {
       })
     );
   }
+
   removeWriter(topicId: string, writerEmail: string): Observable<void> {
     const user$ = this.authService.getConnectedUser();
 
@@ -164,7 +167,10 @@ export class TopicService {
     );
   }
 
-  editTopic(topicId: string, updates: Partial<Omit<Topic, 'id' | 'owner'>>): Observable<void> {
+  editTopic(
+    topicId: string,
+    updates: Partial<Omit<Topic, 'id' | 'owner'>>
+  ): Observable<void> {
     const user$ = this.authService.getConnectedUser();
 
     return user$.pipe(
@@ -181,17 +187,21 @@ export class TopicService {
 
             const topicData = topicSnapshot.data() as Topic;
 
+            // Vérification des permissions
             if (topicData.owner !== user.email && !(topicData.writers || []).includes(user.email ?? '')) {
               return throwError(() => new Error('Permission denied'));
             }
 
             return from(updateDoc(topicRef, updates));
+          }),
+          catchError((error) => {
+            console.error('Error updating topic:', error);
+            return throwError(() => error);
           })
         );
       })
     );
   }
-
 
   removeTopic(topicId: string): Observable<void> {
     const user$ = this.authService.getConnectedUser();
@@ -221,6 +231,15 @@ export class TopicService {
     );
   }
 
+  async uploadPostImage(topicId: string, postId: string, file: File): Promise<string> {
+    const fileName = `topics/${topicId}/posts/${postId}/${file.name}`;
+    return this.azureStorage.uploadFile(file, fileName);
+  }
+
+  async deletePostImage(imageUrl: string): Promise<void> {
+    return this.azureStorage.deleteFile(imageUrl);
+  }
+
   getPostById(topicId: string, postId: string): Observable<Post | undefined> {
     const topicRef = doc(this.firestore, 'topics', topicId);
 
@@ -235,7 +254,7 @@ export class TopicService {
     );
   }
 
-  addPost(topicId: string, post: Omit<Post, 'id'>): Observable<void> {
+  addPost(topicId: string, post: Omit<Post, 'id'>): Observable<Post> {
     const user$ = this.authService.getConnectedUser();
 
     return user$.pipe(
@@ -248,11 +267,12 @@ export class TopicService {
 
         return from(updateDoc(topicRef, {
           posts: arrayUnion(newPost)
-        }));
+        })).pipe(
+          map(() => newPost)
+        );
       })
     );
   }
-
 
   editPost(topicId: string, post: Post): Observable<void> {
     const user$ = this.authService.getConnectedUser();
@@ -280,6 +300,7 @@ export class TopicService {
       })
     );
   }
+
   removePost(topicId: string, post: Post): Observable<void> {
     const user$ = this.authService.getConnectedUser();
 
@@ -301,8 +322,6 @@ export class TopicService {
 
             const topicData = topicSnapshot.data() as Topic;
             const updatedPosts = topicData.posts.filter((_post) => _post.id !== post.id);
-
-            console.log('Updated posts:', updatedPosts);
 
             // Mettre à jour le document Firestore avec le nouveau tableau de posts
             return from(updateDoc(topicRef, { posts: updatedPosts }));

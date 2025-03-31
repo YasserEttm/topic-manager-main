@@ -22,9 +22,9 @@ addIcons({ addOutline, chevronForward, ellipsisVertical });
       <ion-toolbar>
         <ion-breadcrumbs>
           <ion-breadcrumb routerLink="">Topics</ion-breadcrumb>
-          <ion-breadcrumb [routerLink]="'#topics/' + topic()?.id">{{
-            topic()?.name
-          }}</ion-breadcrumb>
+          <ion-breadcrumb [routerLink]="'#topics/' + topic()?.id">
+            {{ topic()?.name }}
+          </ion-breadcrumb>
         </ion-breadcrumbs>
       </ion-toolbar>
     </ion-header>
@@ -38,72 +38,103 @@ addIcons({ addOutline, chevronForward, ellipsisVertical });
 
       <ion-list>
         @for(post of topic()?.posts; track post.id) {
-
         <ion-item>
-          <ion-button
-            slot="start"
-            fill="clear"
-            id="click-trigger"
-            (click)="presentPostManagementPopover($event, post)"
-            aria-label="open post management popover"
-            data-cy="open-post-management-popover"
-            ><ion-icon
-              slot="icon-only"
-              color="medium"
-              name="ellipsis-vertical"
-            ></ion-icon
-          ></ion-button>
+          <ion-button slot="start" (click)="presentPostManagementPopover($event, post)">
+            <ion-icon name="ellipsis-vertical" color="medium"></ion-icon>
+          </ion-button>
+
+          <!-- Afficher l'image du post si disponible -->
+          <ion-thumbnail slot="start" *ngIf="post.imageUrl">
+            <img [src]="post.imageUrl" alt="Post image" (error)="handleImageError($event)">
+          </ion-thumbnail>
+
           <ion-label>{{ post.name }}</ion-label>
         </ion-item>
-
         } @empty {
-        <ion-img
-          class="image"
-          src="assets/img/no_data.svg"
-          alt="No data"
-        ></ion-img>
+        <ion-item lines="none" class="ion-text-center">
+          <ion-label>
+            <ion-img src="assets/img/no_data.svg" alt="No data" class="empty-state-image"></ion-img>
+            <p>No posts yet. Create your first post!</p>
+          </ion-label>
+        </ion-item>
         }
       </ion-list>
+
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-        <ion-fab-button
-          data-cy="open-create-post-modal-button"
-          aria-label="open add post modal"
-          (click)="openModal()"
-        >
+        <ion-fab-button (click)="openCreatePostModal()">
           <ion-icon name="add-outline"></ion-icon>
         </ion-fab-button>
       </ion-fab>
     </ion-content>
   `,
-  styles: [
-    `
-      .image::part(image) {
-        width: 50%;
-        margin: auto;
-      }
-    `,
-  ],
+  styles: [`
+    ion-thumbnail {
+      --size: 60px;
+      --border-radius: 8px;
+      margin-right: 12px;
+    }
+    ion-thumbnail img {
+      object-fit: cover;
+      width: 100%;
+      height: 100%;
+    }
+    .empty-state-image {
+      max-height: 200px;
+      margin: 0 auto;
+    }
+  `],
+
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, IonicModule, CommonModule, FormsModule, RouterLink],
 })
-export class TopicDetailsPage {
+export class TopicDetailsPage implements OnInit {
   private readonly topicService = inject(TopicService);
   private readonly route = inject(ActivatedRoute);
   private readonly modalCtrl = inject(ModalController);
   private readonly popoverCtrl = inject(PopoverController);
 
   topicId = this.route.snapshot.params['id'];
-
   topic = toSignal(this.topicService.getById(this.topicId));
 
-  async openModal(post?: Post): Promise<void> {
+  ngOnInit() {
+    this.refreshTopicData();
+  }
+
+  refreshTopicData() {
+    this.topic = toSignal(this.topicService.getById(this.topicId));
+  }
+
+  handleImageError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+  }
+
+  async openCreatePostModal(): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: CreatePostModal,
-      componentProps: { topicId: this.topicId, post },
+      componentProps: { topicId: this.topicId }
     });
-    modal.present();
 
-    await modal.onDidDismiss();
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+    if (data === true) {
+      this.refreshTopicData();
+    }
+  }
+
+  async openEditPostModal(post: Post): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: CreatePostModal,
+      componentProps: { topicId: this.topicId, post }
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+    if (data === true) {
+      this.refreshTopicData();
+    }
   }
 
   async presentPostManagementPopover(event: Event, post: Post) {
@@ -114,25 +145,20 @@ export class TopicDetailsPage {
 
     await popover.present();
 
-    const {
-      data: { action },
-    } = await popover.onDidDismiss();
+    const { data } = await popover.onDidDismiss();
 
-    console.log(action);
-
-    if (action === 'remove') {
+    if (data?.action === 'remove') {
       this.topicService.removePost(this.topicId, post).subscribe({
         next: () => {
           console.log('Post removed successfully');
-          // Mettre à jour la liste des posts après suppression
-          this.topic = toSignal(this.topicService.getById(this.topicId));
+          this.refreshTopicData();
         },
         error: (err) => {
           console.error('Failed to remove post:', err);
         },
       });
-    } else if (action === 'edit') {
-      this.openModal(post);
+    } else if (data?.action === 'edit') {
+      this.openEditPostModal(post);
     }
   }
 }
