@@ -38,9 +38,7 @@ addIcons({ addOutline, chevronForward, ellipsisVertical });
       <ion-list *ngIf="(topic$ | async)?.posts?.length; else noDataTemplate">
         @for(post of (topic$ | async)?.posts; track post.id) {
         <ion-item>
-          <ion-button slot="start" (click)="presentPostManagementPopover($event, post)">
-            <ion-icon name="ellipsis-vertical" color="medium"></ion-icon>
-          </ion-button>
+        <ion-icon name="ellipsis-vertical" slot="start" (click)="presentPostManagementPopover($event, post)"></ion-icon>
 
           <ion-thumbnail slot="start" *ngIf="post.imageUrl">
             <img [src]="post.imageUrl" alt="Post image" (error)="handleImageError($event)">
