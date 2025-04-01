@@ -9,7 +9,7 @@ export class AzureStorageService {
   private readonly accountName = '2025topicmanager';
   private readonly containerName = 'topics';
 
-  private readonly sasToken = "sp=racwd&st=2025-04-01T04:18:57Z&se=2025-04-01T12:18:57Z&spr=https&sv=2024-11-04&sr=c&sig=iQh55pygmxSx%2BYdxEKkhskrSWl1lynrblGG0OORFWvE%3D";
+  private readonly sasToken = "sp=racwdl&st=2025-04-01T17:33:26Z&se=2025-04-10T01:33:26Z&spr=https&sv=2024-11-04&sr=c&sig=kIfgllMVg3S6TvQoUo%2Fy7IK5AFRGrY0jryCTiT3R7w4%3D";
 
   private getBlobServiceClient(): BlobServiceClient {
     const blobServiceClient = new BlobServiceClient(
