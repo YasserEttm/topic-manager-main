@@ -9,6 +9,7 @@ export interface Topic {
   writers?: string[];
   isOwner?: boolean; 
   isReader?: boolean; 
+  isWriter?: boolean;
 }
 
 export type Topics = Topic[];

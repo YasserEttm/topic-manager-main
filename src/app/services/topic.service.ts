@@ -38,11 +38,11 @@ export class TopicService {
 
   getAll(): Observable<Topic[]> {
     const user$ = this.authService.getConnectedUser();
-
+  
     return user$.pipe(
       switchMap((user) => {
         if (!user?.email) return throwError(() => new Error('User not authenticated'));
-
+  
         const whereUserIsOwnerTopics = query(
           this.topicsCollection,
           where('owner', '==', user.email)
@@ -51,46 +51,44 @@ export class TopicService {
           this.topicsCollection,
           where('readers', 'array-contains', user.email)
         );
-
+        const whereUserIsWriterTopics = query(
+          this.topicsCollection,
+          where('writers', 'array-contains', user.email)
+        );
+  
         return combineLatest([
           collectionData(whereUserIsOwnerTopics, { idField: 'id' }) as Observable<Topic[]>,
-          collectionData(whereUserIsReaderTopics, { idField: 'id' }) as Observable<Topic[]>
+          collectionData(whereUserIsReaderTopics, { idField: 'id' }) as Observable<Topic[]>,
+          collectionData(whereUserIsWriterTopics, { idField: 'id' }) as Observable<Topic[]>
         ]).pipe(
-          map(([ownedTopics, readTopics]) => {
-            // Map owned topics with isOwner flag
-            const ownedWithFlag = ownedTopics.map((topic) => ({
-              ...topic,
-              isOwner: true,
-              isReader: false
-            }));
-
-
-            const readWithFlag = readTopics.map((topic) => ({
-              ...topic,
-              isOwner: false,
-              isReader: true
-            }));
-
-
-            const allTopics = [...ownedWithFlag, ...readWithFlag];
-
-            const uniqueTopics: Topic[] = allTopics.reduce((acc: Topic[], current: Topic) => {
-              const x = acc.find((item) => item.id === current.id);
-              if (!x) {
+          map(([ownedTopics, readTopics, writeTopics]) => {
+            // Merge and flag topics
+            const allTopics = [
+              ...ownedTopics.map((topic) => ({ ...topic, isOwner: true, isReader: false, isWriter: false })),
+              ...readTopics.map((topic) => ({ ...topic, isOwner: false, isReader: true, isWriter: false })),
+              ...writeTopics.map((topic) => ({ ...topic, isOwner: false, isReader: false, isWriter: true }))
+            ];
+  
+            // Handle writer override: if a topic is in both read and write, mark as writer
+            const uniqueTopics = allTopics.reduce((acc: Topic[], current: Topic) => {
+              const existing = acc.find((item) => item.id === current.id);
+              if (!existing) {
                 return acc.concat([current]);
               } else {
+                if (current.isWriter) {
+                  existing.isWriter = true; // Override with writer status if present
+                  existing.isReader = false; // Ensure it's not marked as reader if it's a writer
+                }
                 return acc;
               }
             }, []);
-
+  
             return uniqueTopics;
           })
         );
       })
     );
   }
-
-
 
 
   getById(id: string): Observable<Topic | undefined> {
