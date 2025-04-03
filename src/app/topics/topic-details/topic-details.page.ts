@@ -1,95 +1,93 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, Platform } from '@ionic/angular';
 import { TopicService } from 'src/app/services/topic.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ModalController, PopoverController, ToastController } from '@ionic/angular';
 import { CreatePostModal } from '../modals/create-post/create-post.component';
 import { Post } from 'src/app/models/post';
 import { addIcons } from 'ionicons';
-import { addOutline, chevronForward, ellipsisVertical } from 'ionicons/icons';
+import { addOutline, chevronForward, ellipsisVertical, imageOutline, locationOutline } from 'ionicons/icons';
 import { ItemManagementPopover } from '../popover/item-management/item-management.component';
 import { BehaviorSubject, switchMap } from 'rxjs';
 
-addIcons({ addOutline, chevronForward, ellipsisVertical });
+addIcons({ addOutline, chevronForward, ellipsisVertical, imageOutline, locationOutline });
 
 @Component({
   selector: 'app-topic-details',
   template: `
-    <ion-header [translucent]="true">
-      <ion-toolbar>
-        <ion-breadcrumbs>
-          <ion-breadcrumb routerLink="">Topics</ion-breadcrumb>
-          <ion-breadcrumb [routerLink]="'#topics/' + (topic$ | async)?.id">
-            {{ (topic$ | async)?.name }}
-          </ion-breadcrumb>
-        </ion-breadcrumbs>
-      </ion-toolbar>
-    </ion-header>
+<ion-header [translucent]="true" class="safe-area-header">
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-back-button defaultHref="/topics"></ion-back-button>
+      </ion-buttons>
+      <ion-title>{{ (topic$ | async)?.name }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
-    <ion-content [fullscreen]="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">{{ (topic$ | async)?.name }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
+  <ion-content [fullscreen]="true">
+    <ion-refresher slot="fixed" (ionRefresh)="refreshData($event)">
+      <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
 
-      <ion-list *ngIf="(topic$ | async)?.posts?.length; else noDataTemplate">
-        @for(post of (topic$ | async)?.posts; track post.id) {
-        <ion-item>
-        <ion-icon name="ellipsis-vertical" slot="start" (click)="presentPostManagementPopover($event, post)"></ion-icon>
+    <!-- Desktop/Tablet View -->
+    <ion-list *ngIf="(topic$ | async)?.posts?.length && !isMobileView" class="posts-list desktop-list">
+      @for(post of (topic$ | async)?.posts; track post.id) {
+      <ion-item class="post-item" [routerLink]="['/topics', topicId, 'posts', post.id]">
+        <ion-thumbnail slot="start" *ngIf="post.imageUrl">
+          <img [src]="post.imageUrl" alt="Post image" (error)="handleImageError($event)">
+        </ion-thumbnail>
+        <ion-thumbnail slot="start" *ngIf="!post.imageUrl">
+          <div class="placeholder-image">
+            <ion-icon name="image-outline"></ion-icon>
+          </div>
+        </ion-thumbnail>
+        <ion-label>
+          <h2>{{ post.name }}</h2>
+          <p *ngIf="post.description">{{ post.description }}</p>
+        </ion-label>
+        <ion-icon name="chevron-forward" slot="end"></ion-icon>
+        <ion-icon name="ellipsis-vertical" slot="end" (click)="presentPostManagementPopover($event, post)" class="action-icon"></ion-icon>
+      </ion-item>
+      }
+    </ion-list>
 
-          <ion-thumbnail slot="start" *ngIf="post.imageUrl">
-            <img [src]="post.imageUrl" alt="Post image" (error)="handleImageError($event)">
-          </ion-thumbnail>
+    <!-- Mobile Optimized View -->
+    <ion-list *ngIf="(topic$ | async)?.posts?.length && isMobileView" class="posts-list mobile-list">
+      @for(post of (topic$ | async)?.posts; track post.id) {
+      <ion-item class="post-item mobile-item" [routerLink]="['/topics', topicId, 'posts', post.id]">
+        <ion-icon name="location-outline" color="primary" slot="start" class="location-icon"></ion-icon>
+        <ion-label>
+          <h2>{{ post.name }}</h2>
+        </ion-label>
+        <ion-buttons slot="end">
+          <ion-button fill="clear" (click)="presentPostManagementPopover($event, post)">
+            <ion-icon name="ellipsis-vertical" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-item>
+      }
+    </ion-list>
 
-          <ion-label>{{ post.name }}</ion-label>
-        </ion-item>
-        }
-      </ion-list>
+    <!-- No Data State -->
+    <div *ngIf="!(topic$ | async)?.posts?.length" class="no-data-container">
+      <img src="assets/img/no_data.svg" alt="No data" class="empty-state-image">
+      <p>No posts yet. Create your first post!</p>
+      <ion-button (click)="openCreatePostModal()" fill="outline">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Create Post
+      </ion-button>
+    </div>
 
-      <!-- No Data State -->
-      <ng-template #noDataTemplate>
-        <div class="no-data-container">
-          <img src="assets/img/no_data.svg" alt="No data" class="empty-state-image">
-          <p>No posts yet. Create your first post!</p>
-        </div>
-      </ng-template>
-
-      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-        <ion-fab-button (click)="openCreatePostModal()">
-          <ion-icon name="add-outline"></ion-icon>
-        </ion-fab-button>
-      </ion-fab>
-    </ion-content>
-  `,
-  styles: [`
-    ion-thumbnail {
-      --size: 60px;
-      --border-radius: 8px;
-      margin-right: 12px;
-    }
-    ion-thumbnail img {
-      object-fit: cover;
-      width: 100%;
-      height: 100%;
-    }
-    .no-data-container {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 50vh;
-      text-align: center;
-      color: var(--ion-color-medium);
-    }
-    .empty-state-image {
-      max-height: 180px;
-      margin-bottom: 10px;
-    }
-  `],
-
+    <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+      <ion-fab-button (click)="openCreatePostModal()">
+        <ion-icon name="add-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+  </ion-content>
+`,
+  styleUrls: ['../modals/topics.scss'],
   standalone: true,
   imports: [CommonModule, IonicModule, CommonModule, FormsModule, RouterLink],
 })
@@ -99,8 +97,10 @@ export class TopicDetailsPage implements OnInit {
   private readonly modalCtrl = inject(ModalController);
   private readonly popoverCtrl = inject(PopoverController);
   private readonly toastCtrl = inject(ToastController);
+  private readonly platform = inject(Platform);
 
   topicId = this.route.snapshot.params['id'];
+  isMobileView = false;
 
   // BehaviorSubject to trigger data refresh
   private refreshTrigger = new BehaviorSubject<void>(undefined);
@@ -111,7 +111,18 @@ export class TopicDetailsPage implements OnInit {
   );
 
   ngOnInit() {
+    this.checkPlatform();
     this.refreshTopicData();
+
+    // Watch for platform width changes
+    this.platform.resize.subscribe(() => {
+      this.checkPlatform();
+    });
+  }
+
+  checkPlatform() {
+    // Check if mobile based on screen width rather than user agent for more reliability
+    this.isMobileView = this.platform.width() < 768;
   }
 
   refreshTopicData() {
@@ -121,6 +132,13 @@ export class TopicDetailsPage implements OnInit {
   handleImageError(event: Event) {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
+  }
+
+  refreshData(event: any) {
+    this.refreshTopicData();
+    setTimeout(() => {
+      event.target.complete();
+    }, 1000);
   }
 
   async openCreatePostModal(): Promise<void> {
@@ -152,9 +170,14 @@ export class TopicDetailsPage implements OnInit {
   }
 
   async presentPostManagementPopover(event: Event, post: Post) {
+    // Prevent navigation when clicking the menu
+    event.stopPropagation();
+    event.preventDefault();
+
     const popover = await this.popoverCtrl.create({
       component: ItemManagementPopover,
       event,
+      cssClass: 'post-management-popover'
     });
 
     await popover.present();

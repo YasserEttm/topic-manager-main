@@ -1,0 +1,73 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancel()" fill="clear">Cancel</ion-button>
+    </ion-buttons>
+    <ion-title>{{ post ? 'Edit' : 'Create' }} Destination</ion-title>
+    <ion-buttons slot="end">
+    <ion-button (click)="onSubmit()" fill="clear">Save</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="form-modal-content" scroll-y="true">
+  <form [formGroup]="postForm" (ngSubmit)="onSubmit()" class="form-wrapper">
+    <div class="form-container centered">
+
+      <!-- Destination Name -->
+      <div class="input-wrapper">
+        <ion-item lines="none" class="custom-item">
+          <ion-label position="stacked">Destination Name</ion-label>
+          <ion-input
+            formControlName="name"
+            placeholder="Enter destination name"
+            class="custom-input"
+          ></ion-input>
+        </ion-item>
+        <span class="error-message" *ngIf="isControlInvalid('name')">
+          {{ getNameErrorMessage() }}
+        </span>
+      </div>
+
+      <!-- Description Field -->
+      <div class="input-wrapper">
+        <ion-item lines="none" class="custom-item">
+          <ion-label position="stacked">Description</ion-label>
+          <textarea
+            class="custom-textarea"
+            formControlName="description"
+            placeholder="Write something about this destination..."
+            rows="5"
+          ></textarea>
+        </ion-item>
+        <span class="error-message" *ngIf="isControlInvalid('description')">
+          {{ descriptionErrorText }}
+        </span>
+      </div>
+
+      <!-- Image preview -->
+      <div class="post-image-container" *ngIf="imagePreviewSafe || postImageSafe">
+        <img [src]="imagePreviewSafe || postImageSafe" alt="Preview" />
+        <ion-button
+          fill="clear"
+          color="danger"
+          class="remove-image-btn"
+          (click)="removeImage()"
+        >
+          <ion-icon name="trash" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+
+      <!-- Upload Button -->
+      <ion-button
+        expand="block"
+        (click)="openCameraOrGallery()"
+        class="primary-button change-image-button"
+      >
+        <ion-icon name="camera" slot="start"></ion-icon>
+        {{ imagePreviewSafe || postImageSafe ? 'Change Image' : 'Add Image' }}
+      </ion-button>
+
+    </div>
+  </form>
+</ion-content>

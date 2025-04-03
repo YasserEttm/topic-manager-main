@@ -36,7 +36,7 @@ export const routes: Routes = [
   },
 
   {
-    path: 'topics/:topicId/posts/:postId', // New route for posts
+    path: 'topics/:topicId/posts/:postId',
     loadComponent: () =>
       import('./topics/post-details/PostDetailsPage').then(
         (m) => m.PostDetailsPage
@@ -51,4 +51,9 @@ export const routes: Routes = [
     path: 'register',
     loadComponent: () => import('./auth/register/register.component').then( m => m.RegisterComponent)
   },
+
+  {
+    path: '**',
+    redirectTo: 'topics',
+  }
 ];

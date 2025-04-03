@@ -17,6 +17,20 @@
   <!-- add to homescreen for ios -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta http-equiv="Content-Security-Policy"
+  content="
+    default-src 'self' capacitor://localhost;
+    img-src 'self' data: blob: https://*.blob.core.windows.net;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com;
+    style-src 'self' 'unsafe-inline';
+    connect-src 'self' capacitor://localhost https://*.blob.core.windows.net https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com;
+    frame-src https://*.firebaseapp.com;
+    media-src *;
+    font-src 'self' data:;
+    object-src 'none';
+  ">
+
+
 </head>
 
 <body>

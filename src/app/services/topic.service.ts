@@ -5,6 +5,7 @@ import { generateUUID } from '../utils/generate-uuid';
 import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
 import { AzureStorageService } from './azure-storage.service';
+import { Directory, Filesystem } from '@capacitor/filesystem';
 
 import {
   Firestore,
@@ -24,6 +25,7 @@ import {
   deleteDoc,
   DocumentReference
 } from '@angular/fire/firestore';
+import { Capacitor } from '@capacitor/core';
 
 @Injectable({
   providedIn: 'root',
@@ -36,11 +38,11 @@ export class TopicService {
 
   getAll(): Observable<Topic[]> {
     const user$ = this.authService.getConnectedUser();
-  
+
     return user$.pipe(
       switchMap((user) => {
         if (!user?.email) return throwError(() => new Error('User not authenticated'));
-  
+
         const whereUserIsOwnerTopics = query(
           this.topicsCollection,
           where('owner', '==', user.email)
@@ -49,7 +51,7 @@ export class TopicService {
           this.topicsCollection,
           where('readers', 'array-contains', user.email)
         );
-  
+
         return combineLatest([
           collectionData(whereUserIsOwnerTopics, { idField: 'id' }) as Observable<Topic[]>,
           collectionData(whereUserIsReaderTopics, { idField: 'id' }) as Observable<Topic[]>
@@ -61,17 +63,17 @@ export class TopicService {
               isOwner: true,
               isReader: false
             }));
-  
-            
+
+
             const readWithFlag = readTopics.map((topic) => ({
               ...topic,
               isOwner: false,
               isReader: true
             }));
-  
-            
+
+
             const allTopics = [...ownedWithFlag, ...readWithFlag];
-  
+
             const uniqueTopics: Topic[] = allTopics.reduce((acc: Topic[], current: Topic) => {
               const x = acc.find((item) => item.id === current.id);
               if (!x) {
@@ -80,16 +82,16 @@ export class TopicService {
                 return acc;
               }
             }, []);
-  
+
             return uniqueTopics;
           })
         );
       })
     );
   }
-  
-  
-  
+
+
+
 
   getById(id: string): Observable<Topic | undefined> {
     const topicDoc = doc(this.firestore, 'topics', id);
@@ -266,13 +268,62 @@ export class TopicService {
     );
   }
 
-  async uploadPostImage(topicId: string, postId: string, file: File): Promise<string> {
-    const fileName = `topics/${topicId}/posts/${postId}/${file.name}`;
-    return this.azureStorage.uploadFile(file, fileName);
+
+  async uploadPostImage(topicId: string, postId: string, file: File | Blob): Promise<string> {
+    const fileToUpload = file instanceof File ? file :
+      new File([file], `image_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+    // Nettoyage du nom du fichier : supprime les caractères spéciaux et espaces
+    const sanitizedOriginalName = fileToUpload.name.toLowerCase().replace(/[^a-z0-9_.-]/g, '_');
+    const fileName = `${postId}_${Date.now()}_${sanitizedOriginalName}`;
+
+    try {
+      // Upload sur Azure
+      const url = await this.azureStorage.uploadFile(fileToUpload, `${topicId}/${fileName}`);
+      console.log('[uploadPostImage] Image uploaded at:', url);
+      return url;
+    } catch (err) {
+      console.error('[uploadPostImage] Upload failed:', err);
+      throw err;
+    }
   }
 
   async deletePostImage(imageUrl: string): Promise<void> {
-    return this.azureStorage.deleteFile(imageUrl);
+    try {
+      // Vérifier si c'est une URL Azure
+      if (imageUrl.includes('.blob.core.windows.net')) {
+        // Extraire le chemin du fichier de l'URL Azure
+        const urlParts = imageUrl.split('/');
+        const containerIndex = urlParts.findIndex(part => part === this.azureStorage.containerName);
+
+        if (containerIndex !== -1 && containerIndex < urlParts.length - 1) {
+          // Obtenir le chemin du fichier après le nom du conteneur
+          const filePath = urlParts.slice(containerIndex + 1).join('/').split('?')[0];
+
+          // Supprimer le fichier sur Azure
+          await this.azureStorage.deleteFile(filePath);
+          console.log('Image supprimée d\'Azure:', filePath);
+        } else {
+          console.error('Format d\'URL Azure invalide:', imageUrl);
+        }
+      } else if (Capacitor.isNativePlatform()) {
+        // Supprimer le fichier sur le système de fichiers natif
+        try {
+          await Filesystem.deleteFile({
+            path: imageUrl,
+            directory: Directory.Data
+          });
+          console.log('Image supprimée du système de fichiers natif:', imageUrl);
+        } catch (error) {
+          console.error('Erreur lors de la suppression de l\'image du système de fichiers:', error);
+        }
+      } else {
+        // Sur le web avec une data URL ou autre type d'URL
+        console.log('Image non supprimée (format non géré):', imageUrl.substring(0, 30) + '...');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la suppression de l\'image:', error);
+    }
   }
 
   getPostById(topicId: string, postId: string): Observable<Post | undefined> {
