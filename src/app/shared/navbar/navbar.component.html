@@ -1,6 +1,14 @@
 <ion-header>
   <ion-toolbar>
+    <!-- Flèche retour -->
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/topics"></ion-back-button>
+    </ion-buttons>
+
+    <!-- Titre centré -->
     <ion-title>{{ pageTitle }}</ion-title>
+
+    <!-- Bouton logout à droite -->
     <ion-buttons slot="end">
       <ion-button (click)="logout()" aria-label="Logout">
         <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>

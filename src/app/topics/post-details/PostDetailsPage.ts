@@ -9,57 +9,51 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { AzureStorageService } from 'src/app/services/azure-storage.service';
 import { addIcons } from 'ionicons';
 import { locationOutline, calendarOutline, imageOutline } from 'ionicons/icons';
+import { NavbarComponent } from "../../shared/navbar/navbar.component";
+
 
 addIcons({ locationOutline, calendarOutline, imageOutline });
 
 @Component({
   selector: 'app-post-details',
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterLink],
+  imports: [CommonModule, IonicModule, RouterLink, NavbarComponent],
   template: `
-    <ion-header [translucent]="true" class="safe-area-header">
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button [defaultHref]="'/topics/' + topicId"></ion-back-button>
-        </ion-buttons>
-        <ion-title>{{ post?.name || 'Post Details' }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
+     <app-navbar [pageTitle]="post?.name || 'Post Details'"></app-navbar>
+      <ion-content [fullscreen]="true">
+        <ion-refresher slot="fixed" (ionRefresh)="refreshPost($event)">
+          <ion-refresher-content></ion-refresher-content>
+        </ion-refresher>
 
-    <ion-content [fullscreen]="true">
-      <ion-refresher slot="fixed" (ionRefresh)="refreshPost($event)">
-        <ion-refresher-content></ion-refresher-content>
-      </ion-refresher>
+        <div class="post-detail-container" *ngIf="post">
+          <div class="post-image" *ngIf="postImageSafe">
+            <img [src]="postImageSafe" alt="{{ post.name }}">
+          </div>
+          <div class="post-image" *ngIf="!postImageSafe">
+            <div class="placeholder-image">
+              <ion-icon name="image-outline" size="large"></ion-icon>
+            </div>
+          </div>
 
-      <div class="post-detail-container" *ngIf="post">
-        <div class="post-image" *ngIf="postImageSafe">
-          <img [src]="postImageSafe" alt="{{ post.name }}">
-        </div>
-        <div class="post-image" *ngIf="!postImageSafe">
-          <div class="placeholder-image">
-            <ion-icon name="image-outline" size="large"></ion-icon>
+          <div class="post-content">
+            <div class="travel-label">
+              <ion-icon name="location-outline"></ion-icon>
+              {{ topicName }}
+            </div>
+            <h1>{{ post.name }}</h1>
+            <p *ngIf="post.description">{{ post.description }}</p>
+            <p *ngIf="!post.description" class="no-description">No description available for this destination.</p>
           </div>
         </div>
 
-        <div class="post-content">
-          <div class="travel-label">
-            <ion-icon name="location-outline"></ion-icon>
-            {{ topicName }}
-          </div>
-          <h1>{{ post.name }}</h1>
-          <p *ngIf="post.description">{{ post.description }}</p>
-          <p *ngIf="!post.description" class="no-description">No description available for this destination.</p>
+        <div class="no-data-container" *ngIf="!post">
+          <img src="assets/img/no_data.svg" alt="Not Found" class="empty-state-image">
+          <p>Post not found.</p>
+          <ion-button [routerLink]="['/topics', topicId]" fill="outline">
+            Return to Topic
+          </ion-button>
         </div>
-      </div>
-
-      <div class="no-data-container" *ngIf="!post">
-        <img src="assets/img/no_data.svg" alt="Not Found" class="empty-state-image">
-        <p>Post not found.</p>
-        <ion-button [routerLink]="['/topics', topicId]" fill="outline">
-          Return to Topic
-        </ion-button>
-      </div>
-    </ion-content>
+      </ion-content>
   `,
   styleUrls: ['../modals/topics.scss']
 })

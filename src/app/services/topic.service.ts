@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { Topic, Topics } from '../models/topic';
+import { Topic } from '../models/topic';
 import { Post } from '../models/post';
 import { generateUUID } from '../utils/generate-uuid';
-import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import {  catchError, combineLatest, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
 import { AzureStorageService } from './azure-storage.service';
 import { Directory, Filesystem } from '@capacitor/filesystem';
@@ -270,15 +270,17 @@ export class TopicService {
 
 
   async uploadPostImage(topicId: string, postId: string, file: File | Blob): Promise<string> {
+    if (Capacitor.isNativePlatform()) {
+      throw new Error('Image upload is disabled on mobile devices');
+    }
+
     const fileToUpload = file instanceof File ? file :
       new File([file], `image_${Date.now()}.jpg`, { type: 'image/jpeg' });
 
-    // Nettoyage du nom du fichier : supprime les caractères spéciaux et espaces
     const sanitizedOriginalName = fileToUpload.name.toLowerCase().replace(/[^a-z0-9_.-]/g, '_');
     const fileName = `${postId}_${Date.now()}_${sanitizedOriginalName}`;
 
     try {
-      // Upload sur Azure
       const url = await this.azureStorage.uploadFile(fileToUpload, `${topicId}/${fileName}`);
       console.log('[uploadPostImage] Image uploaded at:', url);
       return url;
@@ -287,6 +289,7 @@ export class TopicService {
       throw err;
     }
   }
+
 
   async deletePostImage(imageUrl: string): Promise<void> {
     try {

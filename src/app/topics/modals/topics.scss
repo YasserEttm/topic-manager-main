@@ -1,5 +1,4 @@
 :root {
-  --ion-color-primary: #3d9970; // Vert doux pro
   --ion-color-secondary: #a8dadc;
   --ion-color-danger: #e63946;
   --ion-color-button-text: #2e2e2e;
@@ -18,7 +17,6 @@
   --ion-margin: 16px;
 }
 
-/* App structure */
 ion-app {
   background: var(--ion-background-color);
 }
@@ -43,30 +41,24 @@ ion-app {
   margin-bottom: 8px;
 }
 
-/* Textarea styling - using native textarea for better mobile support */
 .custom-textarea {
-  width: 100%;
-  box-sizing: border-box;
+  background-color: #f1f1f1;
+  border-radius: 8px;
+  border: 1px solid #ccc;
   padding: 12px;
+  width: 100%;
   font-size: 16px;
-  background-color: var(--ion-card-background);
-  border: 1px solid var(--ion-border-color);
-  border-radius: var(--ion-border-radius);
   color: var(--ion-text-color);
-  font-family: inherit;
   resize: vertical;
-  min-height: 120px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  box-sizing: border-box;
 }
 
 .custom-textarea:focus {
-  border-color: var(--ion-color-primary);
+  border-color: rgb(118, 156, 118);
   box-shadow: 0 0 0 2px rgba(61, 153, 112, 0.2);
   outline: none;
 }
 
-/* Custom item with shadow */
 .custom-item {
   --background: transparent;
   --border-color: transparent;
@@ -75,25 +67,37 @@ ion-app {
   --inner-padding-end: 0;
   margin-bottom: 8px;
 }
+
 .custom-item ion-label {
   margin-bottom: 20px !important;
 }
 
 .custom-input {
-  --background: var(--ion-card-background);
+  background-color: #f1f1f1;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 12px;
+  width: 100%;
+  font-size: 16px;
+  color: var(--ion-text-color);
+}
+
+.input-bg {
+  background-color: #f1f1f1;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.padded-input {
   --padding-start: 12px;
   --padding-end: 12px;
-  --border-radius: 8px;
-  --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  font-size: 16px;
-  color: var(--ion-color-button-text);
-  border: 1px solid var(--ion-border-color);
-  box-shadow: 0 2px 6px rgba(25, 24, 24, 0.05);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .custom-input:focus {
-  --border-color: var(--ion-color-primary);
+  --border-color: rgb(118, 156, 118);
   --box-shadow: 0 0 0 2px rgba(61, 153, 112, 0.2);
 }
 
@@ -105,7 +109,7 @@ ion-app {
 }
 
 .primary-button {
-  --background: var(--ion-color-primary);
+  --background: rgb(118, 156, 118); /* Couleur de fond verte */
   --color: var(--ion-color-button-text);
   --border-radius: 50px;
   font-weight: 600;
@@ -117,8 +121,28 @@ ion-app {
   max-width: 480px;
 }
 
+.themed-upload-button {
+  --background: rgb(118, 156, 118);
+  --color: white;
+  --box-shadow: 0 4px 8px rgba(61, 153, 112, 0.25);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 50px;
+}
+
 .change-image-button {
-  margin-top: 16px;
+  --background: rgb(118, 156, 118);
+  --color: white;
+  --border-radius: 50px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 12px 20px;
+  margin-top: 8px;
+  max-width: 480px;
+  width: 100%;
+  --box-shadow: 0 4px 8px rgba(61, 153, 112, 0.25);
 }
 
 .post-image-container {
@@ -143,7 +167,6 @@ ion-app {
   display: block;
 }
 
-/* Supprimer image */
 .remove-image-btn {
   position: absolute;
   top: 12px;
@@ -156,24 +179,35 @@ ion-app {
   --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* FAB */
+/* FAB styles */
 ion-fab {
   position: fixed;
   bottom: calc(env(safe-area-inset-bottom) + 16px);
   right: 16px;
   z-index: 1000;
-
-  ion-fab-button {
-    --background: #4a7b64;
-    --color: white;
-    --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 50%;
-    width: 56px;
-    height: 56px;
-  }
 }
 
-/* Post Details */
+ion-fab-button {
+  --background: rgb(118, 156, 118); /* Couleur verte du bouton */
+  --color: white;
+  --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+ion-fab-button ion-icon {
+  font-size: 24px;
+}
+
+ion-fab-button:hover,
+ion-fab-button:focus {
+  filter: brightness(1.05);
+}
+
+/* Post detail styling */
 .post-detail-container {
   display: flex;
   flex-direction: column;
@@ -225,8 +259,24 @@ ion-fab {
   font-style: italic;
 }
 
-/* Mobile adapt */
+/* Mobile responsive tweaks */
 @media (max-width: 576px) {
+  ion-fab-button {
+    --background: rgb(118, 156, 118) !important;
+    --color: white !important;
+    --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 50% !important;
+    width: 56px !important;
+    height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  ion-fab-button ion-icon {
+    font-size: 24px !important;
+  }
+
   .form-container.centered {
     padding: 16px 12px;
     gap: 18px;
@@ -252,30 +302,7 @@ ion-fab {
   }
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ion-background-color: #121212;
-    --ion-card-background: #1e1e1e;
-    --ion-toolbar-background: #1e1e1e;
-    --ion-text-color: #eeeeee;
-    --ion-text-color-secondary: #999;
-    --ion-color-button-text: #eeeeee;
-  }
-
-  .form-container,
-  .post-image-container {
-    background-color: var(--ion-card-background);
-  }
-
-  .custom-textarea {
-    background-color: var(--ion-card-background);
-    color: var(--ion-text-color);
-    border: 1px solid var(--ion-border-color);
-  }
-
-  .custom-textarea:focus {
-    border-color: var(--ion-color-primary);
-    box-shadow: 0 0 0 2px rgba(61, 153, 112, 0.2);
-  }
+ion-fab-button:hover,
+ion-fab-button:focus {
+  filter: brightness(1.05);
 }

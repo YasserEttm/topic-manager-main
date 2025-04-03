@@ -13,11 +13,13 @@ import { finalize } from 'rxjs';
 import { generateUUID } from 'src/app/utils/generate-uuid';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { AzureStorageService } from 'src/app/services/azure-storage.service';
+import { Capacitor } from '@capacitor/core';
+import { NavbarComponent } from "../../../shared/navbar/navbar.component";
 
 @Component({
   selector: 'app-create-post',
   standalone: true,
-  imports: [CommonModule, IonicModule, ReactiveFormsModule],
+  imports: [CommonModule, IonicModule, ReactiveFormsModule, NavbarComponent],
   templateUrl: './create-post.component.html',
   styleUrls: ['../topics.scss']
 })
@@ -38,6 +40,7 @@ export class CreatePostModal implements OnInit {
   imagePreview: string | null = null;
   isRemovingImage = false;
   isSubmitting = false;
+  isMobileApp = false;
 
   imagePreviewSafe: SafeUrl | null = null;
   postImageSafe: SafeUrl | null = null;
@@ -56,6 +59,8 @@ export class CreatePostModal implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    this.isMobileApp = Capacitor.isNativePlatform();
+
     if (this.post) {
       this.postForm.patchValue({
         name: this.post.name,
@@ -155,7 +160,7 @@ export class CreatePostModal implements OnInit {
 
         if (this.isRemovingImage) {
           updatedPost.imageUrl = undefined;
-        } else if (this.selectedFile) {
+        } else if (this.selectedFile && !this.isMobileApp) {
           try {
             updatedPost.imageUrl = await this.topicService.uploadPostImage(this.topicId, this.post.id, this.selectedFile);
           } catch (error) {
@@ -176,7 +181,7 @@ export class CreatePostModal implements OnInit {
         const postId = generateUUID();
         let imageUrl: string | undefined;
 
-        if (this.selectedFile) {
+        if (this.selectedFile && !this.isMobileApp) {
           try {
             imageUrl = await this.topicService.uploadPostImage(this.topicId, postId, this.selectedFile);
           } catch (error) {
