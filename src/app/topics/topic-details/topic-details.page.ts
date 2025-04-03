@@ -185,16 +185,17 @@ export class TopicDetailsPage implements OnInit {
     const { data } = await popover.onDidDismiss();
 
     if (data?.action === 'remove') {
-      this.topicService.removeTopic(this.topicId).subscribe({
+      this.topicService.removePost(this.topicId, post).subscribe({
         next: async () => {
-          await this.showToast(`Topic deleted successfully`, 'success');
+          await this.showToast(`Post "${post.name}" deleted successfully`, 'success');
           this.refreshTopicData();
         },
         error: async (err) => {
-          console.error('Failed to remove topic:', err);
-          await this.showToast('Failed to delete topic', 'danger');
+          console.error('Failed to remove post:', err);
+          await this.showToast('Failed to delete post', 'danger');
         },
       });
+
     } else if (data?.action === 'edit') {
       this.openEditPostModal(post);
     }
