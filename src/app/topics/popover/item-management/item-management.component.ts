@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { PopoverController } from '@ionic/angular/standalone';
 import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';  // Import CommonModule
@@ -11,33 +11,35 @@ addIcons({ trash, pencil, personAdd });
   selector: 'app-manage-item',
   imports: [IonicModule, CommonModule], // Include CommonModule here
   template: `
-    <ion-content>
-      <ion-list>
-        <!-- Show 'Edit' if the user is the owner or writer -->
-        <ion-item button *ngIf="isOwner || isWriter" (click)="edit()">
-          <ion-label>Edit</ion-label>
-          <ion-icon slot="end" name="pencil"></ion-icon>
-        </ion-item>
+   <ion-content>
+  <ion-list>
+    <!-- Show 'Edit' if the user is the owner or writer -->
+    <ion-item button *ngIf="isOwner || isWriter" (click)="edit()">
+      <ion-label>Edit</ion-label>
+      <ion-icon slot="end" name="pencil"></ion-icon>
+    </ion-item>
 
-        <!-- Show 'Delete' if the user is the owner -->
-        <ion-item button *ngIf="isOwner" (click)="remove()">
-          <ion-label color="danger">Delete</ion-label>
-          <ion-icon color="danger" slot="end" name="trash"></ion-icon>
-        </ion-item>
+    <!-- Show 'Delete' if the user is the owner -->
+    <ion-item button *ngIf="isOwner" (click)="remove()">
+      <ion-label color="danger">Delete</ion-label>
+      <ion-icon slot="end" color="danger" name="trash"></ion-icon>
+    </ion-item>
 
-        <!-- Show 'Add Readers' if the user is the owner -->
-        <ion-item button *ngIf="isOwner" (click)="addReaders()">
-          <ion-label>Add Readers</ion-label>
-          <ion-icon slot="end" name="person-add"></ion-icon>
-        </ion-item>
+    <!-- Only show these if it's NOT a post -->
+    <ng-container *ngIf="!forPost">
+      <ion-item button *ngIf="isOwner" (click)="addReaders()">
+        <ion-label>Add Readers</ion-label>
+        <ion-icon slot="end" name="person-add"></ion-icon>
+      </ion-item>
 
-        <!-- Show 'Add Writers' if the user is the owner -->
-        <ion-item button *ngIf="isOwner" (click)="addWriters()">
-          <ion-label>Add Writers</ion-label>
-          <ion-icon slot="end" name="person-add"></ion-icon>
-        </ion-item>
-      </ion-list>
-    </ion-content>
+      <ion-item button *ngIf="isOwner" (click)="addWriters()">
+        <ion-label>Add Writers</ion-label>
+        <ion-icon slot="end" name="person-add"></ion-icon>
+      </ion-item>
+    </ng-container>
+  </ion-list>
+</ion-content>
+
   `,
 })
 export class ItemManagementPopover {
@@ -47,6 +49,7 @@ export class ItemManagementPopover {
   isOwner: boolean = false;
   isWriter: boolean = false;
   isReader: boolean = false;
+  @Input() forPost: boolean = false;
 
   // Method to trigger the "edit" action
   edit() {

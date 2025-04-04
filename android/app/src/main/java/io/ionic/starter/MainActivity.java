@@ -2,7 +2,6 @@ package io.ionic.starter;
 
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
-import com.getcapacitor.Plugin;
 import com.getcapacitor.BridgeWebViewClient;
 
 public class MainActivity extends BridgeActivity {

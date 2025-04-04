@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, Platform } from '@ionic/angular';
@@ -106,6 +106,7 @@ export class TopicDetailsPage implements OnInit {
   private readonly toastCtrl = inject(ToastController);
   private readonly platform = inject(Platform);
 
+
   topicId = this.route.snapshot.params['id'];
   isMobileView = false;
 
@@ -179,26 +180,43 @@ export class TopicDetailsPage implements OnInit {
     const popover = await this.popoverCtrl.create({
       component: ItemManagementPopover,
       event,
-      cssClass: 'post-management-popover'
+      cssClass: 'post-management-popover',
+      componentProps: {
+        isOwner: true,
+        isWriter: true,
+        isReader: false,
+        topicId: this.topicId,
+        postId: post.id,
+        postName: post.name,
+        forPost: true // ce flag sert à masquer les boutons Add Readers/Writers si c'est un post
+      },
     });
 
     await popover.present();
 
     const { data } = await popover.onDidDismiss();
+    if (!data) return;
 
-    if (data?.action === 'remove') {
-      this.topicService.removePost(this.topicId, post).subscribe({
-        next: async () => {
-          await this.showToast(`Post "${post.name}" deleted successfully`, 'success');
-          this.refreshTopicData();
-        },
-        error: async (err) => {
-          console.error('Failed to remove post:', err);
-          await this.showToast('Failed to delete post', 'danger');
-        },
-      });
-    } else if (data?.action === 'edit') {
-      this.openEditPostModal(post);
+    switch (data.action) {
+      case 'remove': {
+        this.topicService.removePost(this.topicId, post).subscribe({
+          next: async () => {
+            await this.showToast(`Post "${post.name}" deleted successfully`, 'success');
+            this.refreshTopicData();
+          },
+          error: async (err) => {
+            console.error('Failed to remove post:', err);
+            await this.showToast('Failed to delete post', 'danger');
+          },
+        });
+        break;
+      }
+      case 'edit': {
+        this.openEditPostModal(post);
+        break;
+      }
+      default:
+        break;
     }
   }
 
