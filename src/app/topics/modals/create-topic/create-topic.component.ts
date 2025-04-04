@@ -112,7 +112,8 @@ export class CreateTopicModal implements OnInit {
         name: this.topicForm.value.name!,
       }).subscribe({
         next: () => {
-          this.modalCtrl.dismiss();
+          // Close the modal explicitly
+          this.modalCtrl.dismiss(null, 'submit'); // Dismiss with a 'submit' role
         },
         error: (err) => {
           console.error('Failed to edit topic:', err);
@@ -122,7 +123,8 @@ export class CreateTopicModal implements OnInit {
       // Add new topic
       this.topicService.addTopic(this.topicForm.value.name!, []).subscribe({
         next: () => {
-          this.modalCtrl.dismiss();
+          // Close the modal explicitly
+          this.modalCtrl.dismiss(null, 'submit'); // Dismiss with a 'submit' role
         },
         error: (err) => {
           console.error('Failed to add topic:', err);
@@ -130,4 +132,5 @@ export class CreateTopicModal implements OnInit {
       });
     }
   }
+  
 }

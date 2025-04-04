@@ -4,7 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule, Platform } from '@ionic/angular';
 import { TopicService } from 'src/app/services/topic.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ModalController, PopoverController, ToastController } from '@ionic/angular';
+import {
+  ModalController,
+  PopoverController,
+  ToastController,
+} from '@ionic/angular';
 import { CreatePostModal } from '../modals/create-post/create-post.component';
 import { Post } from 'src/app/models/post';
 import { addIcons } from 'ionicons';
@@ -16,10 +20,20 @@ import {
   locationOutline,
 } from 'ionicons/icons';
 import { ItemManagementPopover } from '../popover/item-management/item-management.component';
-import { BehaviorSubject, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  firstValueFrom,
+  switchMap,
+} from 'rxjs';
 import { NavbarComponent } from 'src/app/shared/navbar/navbar.component';
 
-addIcons({ addOutline, chevronForward, ellipsisVertical, imageOutline, locationOutline });
+addIcons({
+  addOutline,
+  chevronForward,
+  ellipsisVertical,
+  imageOutline,
+  locationOutline,
+});
 
 @Component({
   selector: 'app-topic-details',
@@ -29,7 +43,7 @@ addIcons({ addOutline, chevronForward, ellipsisVertical, imageOutline, locationO
     IonicModule,
     FormsModule,
     RouterLink,
-    NavbarComponent
+    NavbarComponent,
   ],
   template: `
     <!-- Use shared navbar with logout -->
@@ -41,37 +55,74 @@ addIcons({ addOutline, chevronForward, ellipsisVertical, imageOutline, locationO
       </ion-refresher>
 
       <!-- Desktop/Tablet View -->
-      <ion-list *ngIf="(topic$ | async)?.posts?.length && !isMobileView" class="posts-list desktop-list">
-        @for(post of (topic$ | async)?.posts; track post.id) {
-        <ion-item class="post-item" [routerLink]="['/topics', topicId, 'posts', post.id]">
-          <ion-thumbnail slot="start" *ngIf="post.imageUrl">
-            <img [src]="post.imageUrl" alt="Post image" (error)="handleImageError($event)">
-          </ion-thumbnail>
-          <ion-thumbnail slot="start" *ngIf="!post.imageUrl">
-            <div class="placeholder-image">
-              <ion-icon name="image-outline"></ion-icon>
-            </div>
-          </ion-thumbnail>
-          <ion-label>
-            <h2>{{ post.name }}</h2>
-            <p *ngIf="post.description">{{ post.description }}</p>
-          </ion-label>
-          <ion-icon name="chevron-forward" slot="end"></ion-icon>
-          <ion-icon name="ellipsis-vertical" slot="end" (click)="presentPostManagementPopover($event, post)" class="action-icon"></ion-icon>
-        </ion-item>
-        }
+      <ion-list
+        *ngIf="(topic$ | async)?.posts?.length && !isMobileView"
+        class="posts-list desktop-list"
+      >
+        <ng-container
+          *ngFor="let post of (topic$ | async)?.posts; trackBy: trackByPostId"
+        >
+          <ion-item
+            class="post-item"
+            [routerLink]="['/topics', topicId, 'posts', post.id]"
+          >
+            <ion-thumbnail slot="start" *ngIf="post.imageUrl">
+              <img
+                [src]="post.imageUrl"
+                alt="Post image"
+                (error)="handleImageError($event)"
+              />
+            </ion-thumbnail>
+            <ion-thumbnail slot="start" *ngIf="!post.imageUrl">
+              <div class="placeholder-image">
+                <ion-icon name="image-outline"></ion-icon>
+              </div>
+            </ion-thumbnail>
+            <ion-label>
+              <h2>{{ post.name }}</h2>
+              <p *ngIf="post.description">{{ post.description }}</p>
+            </ion-label>
+
+            <!-- Ensure the button is shown only if isReader is false -->
+            <ion-icon name="chevron-forward" slot="end"></ion-icon>
+
+            <ion-icon
+              name="ellipsis-vertical"
+              slot="end"
+              (click)="presentPostManagementPopover($event, post)"
+              *ngIf="!(topic$ | async)?.isReader"
+              class="action-icon"
+            ></ion-icon>
+          </ion-item>
+        </ng-container>
       </ion-list>
 
       <!-- Mobile Optimized View -->
-      <ion-list *ngIf="(topic$ | async)?.posts?.length && isMobileView" class="posts-list mobile-list">
+      <ion-list
+        *ngIf="(topic$ | async)?.posts?.length && isMobileView"
+        class="posts-list mobile-list"
+      >
         @for(post of (topic$ | async)?.posts; track post.id) {
-        <ion-item class="post-item mobile-item" [routerLink]="['/topics', topicId, 'posts', post.id]">
-          <ion-icon name="location-outline" color="primary" slot="start" class="location-icon"></ion-icon>
+        <ion-item
+          class="post-item mobile-item"
+          [routerLink]="['/topics', topicId, 'posts', post.id]"
+        >
+          <ion-icon
+            name="location-outline"
+            color="primary"
+            slot="start"
+            class="location-icon"
+          ></ion-icon>
           <ion-label>
             <h2>{{ post.name }}</h2>
           </ion-label>
           <ion-buttons slot="end">
-            <ion-button fill="clear" (click)="presentPostManagementPopover($event, post)">
+            <!-- Ensure the button is shown only if isReader is false -->
+            <ion-button
+              *ngIf="!(topic$ | async)?.isReader"
+              fill="clear"
+              (click)="presentPostManagementPopover($event, post)"
+            >
               <ion-icon name="ellipsis-vertical" slot="icon-only"></ion-icon>
             </ion-button>
           </ion-buttons>
@@ -81,9 +132,12 @@ addIcons({ addOutline, chevronForward, ellipsisVertical, imageOutline, locationO
 
       <!-- No Data State -->
       <div *ngIf="!(topic$ | async)?.posts?.length" class="no-data-container">
-  <img src="assets/img/no_data.svg" alt="No data" class="empty-state-image">
-</div>
-
+        <img
+          src="assets/img/no_data.svg"
+          alt="No data"
+          class="empty-state-image"
+        />
+      </div>
 
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">
         <ion-fab-button (click)="openCreatePostModal()">
@@ -92,7 +146,7 @@ addIcons({ addOutline, chevronForward, ellipsisVertical, imageOutline, locationO
       </ion-fab>
     </ion-content>
   `,
-  styleUrls: ['../modals/topics.scss']
+  styleUrls: ['../modals/topics.scss'],
 })
 export class TopicDetailsPage implements OnInit {
   private readonly topicService = inject(TopicService);
@@ -101,7 +155,6 @@ export class TopicDetailsPage implements OnInit {
   private readonly popoverCtrl = inject(PopoverController);
   private readonly toastCtrl = inject(ToastController);
   private readonly platform = inject(Platform);
-
 
   topicId = this.route.snapshot.params['id'];
   isMobileView = false;
@@ -119,6 +172,10 @@ export class TopicDetailsPage implements OnInit {
     this.platform.resize.subscribe(() => {
       this.checkPlatform();
     });
+  }
+
+  trackByPostId(index: number, post: Post) {
+    return post.id; // Assuming each post has a unique 'id'
   }
 
   checkPlatform() {
@@ -144,7 +201,7 @@ export class TopicDetailsPage implements OnInit {
   async openCreatePostModal(): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: CreatePostModal,
-      componentProps: { topicId: this.topicId }
+      componentProps: { topicId: this.topicId },
     });
 
     await modal.present();
@@ -158,7 +215,7 @@ export class TopicDetailsPage implements OnInit {
   async openEditPostModal(post: Post): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: CreatePostModal,
-      componentProps: { topicId: this.topicId, post }
+      componentProps: { topicId: this.topicId, post },
     });
 
     await modal.present();
@@ -173,18 +230,21 @@ export class TopicDetailsPage implements OnInit {
     event.stopPropagation();
     event.preventDefault();
 
+    const topic = await firstValueFrom(this.topic$); // wait for the topic value
+    if (!topic) return;
+
     const popover = await this.popoverCtrl.create({
       component: ItemManagementPopover,
       event,
       cssClass: 'post-management-popover',
       componentProps: {
-        isOwner: true,
-        isWriter: true,
-        isReader: false,
+        isOwner: topic.isOwner,
+        isWriter: topic.isWriter,
+        isReader: topic.isReader,
         topicId: this.topicId,
         postId: post.id,
         postName: post.name,
-        forPost: true // ce flag sert à masquer les boutons Add Readers/Writers si c'est un post
+        forPost: true,
       },
     });
 
@@ -197,7 +257,10 @@ export class TopicDetailsPage implements OnInit {
       case 'remove': {
         this.topicService.removePost(this.topicId, post).subscribe({
           next: async () => {
-            await this.showToast(`Post "${post.name}" deleted successfully`, 'success');
+            await this.showToast(
+              `Post "${post.name}" deleted successfully`,
+              'success'
+            );
             this.refreshTopicData();
           },
           error: async (err) => {
@@ -215,14 +278,13 @@ export class TopicDetailsPage implements OnInit {
         break;
     }
   }
-
   async showToast(message: string, color: 'success' | 'danger' = 'success') {
     const toast = await this.toastCtrl.create({
       message,
       duration: 3000,
       position: 'top',
       color,
-      cssClass: 'custom-toast'
+      cssClass: 'custom-toast',
     });
     await toast.present();
   }

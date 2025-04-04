@@ -93,21 +93,35 @@ export class TopicService {
 
   getById(id: string): Observable<Topic | undefined> {
     const topicDoc = doc(this.firestore, 'topics', id);
-
+  
     return docData(topicDoc, { idField: 'id' }).pipe(
-      map((topic: DocumentData | undefined) => {
+      switchMap((topic: DocumentData | undefined) => {
         if (topic) {
           const topicData = topic as Topic;
-
-          return {
-            ...topicData,
-            isOwner: true,
-          };
+  
+          return this.authService.getConnectedUser().pipe(
+            map((user) => {
+              if (!user?.email) return undefined;
+  
+              // Flagging user roles for this topic
+              const isOwner = topicData.owner === user.email;
+              const isReader = topicData.readers?.includes(user.email);
+              const isWriter = topicData.writers?.includes(user.email);
+  
+              return {
+                ...topicData,
+                isOwner,
+                isReader,
+                isWriter
+              };
+            })
+          );
         }
-        return undefined;
+        return of(undefined);
       })
     );
   }
+  
 
   addTopic(name: string, posts: Post[] = []): Observable<Topic> {
     const user$ = this.authService.getConnectedUser();
