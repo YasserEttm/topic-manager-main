@@ -189,12 +189,15 @@ export class CreatePostModal implements OnInit {
           }
         }
 
-        const newPost = {
+        const newPost: any = {
           id: postId,
           name: this.postForm.value.name,
-          description: this.postForm.value.description,
-          imageUrl
+          description: this.postForm.value.description
         };
+
+        if (imageUrl) {
+          newPost.imageUrl = imageUrl;
+        }
 
         this.topicService.addPost(this.topicId, newPost)
           .pipe(finalize(() => this.isSubmitting = false))
