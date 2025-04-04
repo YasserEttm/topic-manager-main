@@ -489,3 +489,20 @@ ion-fab-button:focus {
     font-size: 20px;
   }
 }
+.no-data-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  text-align: center;
+}
+
+.empty-state-image {
+  width: 500px;
+  margin-top: 100px;
+  max-width: 80%;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.85;
+}
+

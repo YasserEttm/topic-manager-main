@@ -81,13 +81,9 @@ addIcons({ addOutline, chevronForward, ellipsisVertical, imageOutline, locationO
 
       <!-- No Data State -->
       <div *ngIf="!(topic$ | async)?.posts?.length" class="no-data-container">
-        <img src="assets/img/no_data.svg" alt="No data" class="empty-state-image">
-        <p>No posts yet. Create your first post!</p>
-        <ion-button (click)="openCreatePostModal()" fill="outline">
-          <ion-icon name="add-outline" slot="start"></ion-icon>
-          Create Post
-        </ion-button>
-      </div>
+  <img src="assets/img/no_data.svg" alt="No data" class="empty-state-image">
+</div>
+
 
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">
         <ion-fab-button (click)="openCreatePostModal()">
