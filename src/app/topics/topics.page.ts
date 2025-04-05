@@ -39,7 +39,7 @@ addIcons({ addOutline, chevronForward, ellipsisVertical, bookOutline, pencilOutl
 
     <ng-container *ngFor="let topic of topics()">
       <ng-container *ngIf="topic.isOwner">
-        <ion-item lines="none" class="topic-item" [routerLink]="['/topics/' + topic.id]">
+      <ion-item lines="full" class="topic-item" [routerLink]="['/topics/' + topic.id]">
 
           <!-- Desktop View -->
           <ng-container *ngIf="!isMobile">
@@ -104,8 +104,7 @@ addIcons({ addOutline, chevronForward, ellipsisVertical, bookOutline, pencilOutl
 
     <ng-container *ngFor="let topic of topics()">
       <ng-container *ngIf="!topic.isOwner && (topic.isReader || topic.isWriter)">
-        <ion-item lines="none" class="topic-item shared-item" [routerLink]="['/topics/' + topic.id]">
-
+      <ion-item lines="full" class="topic-item" [routerLink]="['/topics/' + topic.id]">
           <!-- Desktop View -->
           <ng-container *ngIf="!isMobile">
             <ion-grid>
