@@ -1,4 +1,4 @@
-import { Component, inject, HostListener } from '@angular/core';
+import { Component, inject, HostListener, signal, effect } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { TopicService } from '../services/topic.service';
 import { CommonModule } from '@angular/common';
@@ -20,10 +20,12 @@ import {
 import { CreateTopicModal } from './modals/create-topic/create-topic.component';
 import { ItemManagementPopover } from './popover/item-management/item-management.component';
 import { Topic } from '../models/topic';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { NavbarComponent } from '../shared/navbar/navbar.component';
 import { AddReaderModal } from './modals/add-reader-modal/add-reader-modal.component';
 import { AddWriterModal } from './modals/add-writer-modal/add-writer-modal.component';
+import { AuthService } from '../services/auth.service';
+import { switchMap, filter, firstValueFrom } from 'rxjs';
+
 
 addIcons({ addOutline, chevronForward, ellipsisVertical, bookOutline, pencilOutline });
 
@@ -202,12 +204,32 @@ export class TopicsPage {
   private readonly popoverCtrl = inject(PopoverController);
   private readonly toastCtrl = inject(ToastController);
   private readonly platform = inject(Platform);
+  private readonly authService = inject(AuthService);
 
-  topics = toSignal(this.topicService.getAll());
+
+  topics = signal<Topic[]>([]);
   isMobile = false;
 
   constructor() {
     this.checkScreenSize();
+    this.loadTopicsAfterLogin(); 
+  }
+
+  ionViewDidEnter() {
+    this.loadTopicsAfterLogin();
+  }
+
+  async loadTopicsAfterLogin() {
+    try {
+      const user = await firstValueFrom(
+        this.authService.getConnectedUser().pipe(filter((u) => !!u))
+      );
+  
+      const topicList = await firstValueFrom(this.topicService.getAll());
+      this.topics.set(topicList);
+    } catch (err) {
+      console.error('[loadTopicsAfterLogin] Problème lors du chargement des topics :', err);
+    }
   }
 
   @HostListener('window:resize')
