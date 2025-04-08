@@ -20,11 +20,7 @@ import {
   locationOutline,
 } from 'ionicons/icons';
 import { ItemManagementPopover } from '../popover/item-management/item-management.component';
-import {
-  BehaviorSubject,
-  firstValueFrom,
-  switchMap,
-} from 'rxjs';
+import { BehaviorSubject, firstValueFrom, switchMap } from 'rxjs';
 import { NavbarComponent } from 'src/app/shared/navbar/navbar.component';
 
 addIcons({
@@ -90,7 +86,7 @@ addIcons({
               name="ellipsis-vertical"
               slot="end"
               (click)="presentPostManagementPopover($event, post)"
-              *ngIf="!(topic$ | async)?.isReader"
+              *ngIf="(topic$ | async)?.isWriter || (topic$ | async)?.isOwner"
               class="action-icon"
             ></ion-icon>
           </ion-item>
@@ -117,9 +113,8 @@ addIcons({
             <h2>{{ post.name }}</h2>
           </ion-label>
           <ion-buttons slot="end">
-            <!-- Ensure the button is shown only if isReader is false -->
             <ion-button
-              *ngIf="!(topic$ | async)?.isReader"
+              *ngIf="(topic$ | async)?.isWriter || (topic$ | async)?.isOwner"
               fill="clear"
               (click)="presentPostManagementPopover($event, post)"
             >
