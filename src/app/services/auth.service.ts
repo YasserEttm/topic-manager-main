@@ -41,35 +41,36 @@ export class AuthService {
 
   async signInWithGoogle(): Promise<void> {
     try {
-      let credential;
-      let isNewUser = false;
-
+      let firebaseUser: User | null = null;
+  
+      // Desktop ou mobile web
       if (this.platform.is('desktop') || this.platform.is('mobileweb')) {
         const result = await signInWithPopup(this.auth, this.googleProvider);
-        isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
-        credential = result.user;
+        firebaseUser = result.user;
       } else {
+        // Mobile natif avec Capacitor
         const result = await FirebaseAuthentication.signInWithGoogle();
         if (result.credential?.idToken) {
           const googleCredential = GoogleAuthProvider.credential(result.credential.idToken);
-          const userCredential = await signInWithCredential(this.auth, googleCredential);
-          isNewUser = userCredential.user.metadata.creationTime === userCredential.user.metadata.lastSignInTime;
-          credential = userCredential.user;
+          const resultAuth = await signInWithCredential(this.auth, googleCredential);
+          firebaseUser = resultAuth.user;
+        } else {
+          throw new Error("Impossible de récupérer l'identifiant Google");
         }
       }
-
-      if (isNewUser && credential) {
-        await sendEmailVerification(credential);
-        await signOut(this.auth);
-        throw new Error('Vérifiez votre email avant de vous connecter');
-      } else {
-        await this.router.navigate(['/topics']);
+  
+      if (!firebaseUser) {
+        throw new Error("Échec de l'authentification Google");
       }
+  
+      // Navigation après connexion réussie
+      await this.router.navigate(['/topics']);
     } catch (error) {
-      console.error('Google sign-in error:', error);
+      console.error('Erreur de connexion Google :', error);
       throw error;
     }
   }
+  
 
   async resetPassword(email: string): Promise<void> {
     await sendPasswordResetEmail(this.auth, email);

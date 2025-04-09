@@ -215,6 +215,10 @@ export class TopicsPage {
     this.loadTopicsAfterLogin(); 
   }
 
+  ngOnInit() {
+    this.setupTopicsSubscription();
+  }
+
   ionViewDidEnter() {
     this.loadTopicsAfterLogin();
   }
@@ -230,6 +234,23 @@ export class TopicsPage {
     } catch (err) {
       console.error('[loadTopicsAfterLogin] Problème lors du chargement des topics :', err);
     }
+  }
+
+  private setupTopicsSubscription() {
+    // S'abonner à l'observable qui écoute les modifications de la collection topics
+    this.authService.getConnectedUser()
+      .pipe(
+        filter((user) => !!user),
+        switchMap(() => this.topicService.getAll()),
+      )
+      .subscribe({
+        next: (topicList) => {
+          this.topics.set(topicList);
+        },
+        error: (err) => {
+          console.error('[setupTopicsSubscription] Problème lors du chargement des topics :', err);
+        }
+      });
   }
 
   @HostListener('window:resize')
@@ -301,6 +322,7 @@ export class TopicsPage {
       this.topicService.removeTopic(topic.id).subscribe({
         next: async () => {
           await this.showToast(`Topic "${topic.name}" deleted successfully`, 'success');
+          await this.loadTopicsAfterLogin();
         },
         error: async (err) => {
           console.error('Failed to remove topic:', err);

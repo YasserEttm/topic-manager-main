@@ -28,9 +28,7 @@ import { Observable, filter, map } from 'rxjs';
           <ion-title>Welcome</ion-title>
           <ion-buttons slot="end">
             <ion-button
-              type="submit"
-              [disabled]="this.topicForm.invalid"
-              [strong]="true"
+              type="onSubmit()"
               >Confirm</ion-button
             >
           </ion-buttons>
