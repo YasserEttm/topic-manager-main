@@ -267,8 +267,11 @@ export class TopicsPage {
       component: CreateTopicModal,
       componentProps: { topic },
     });
-    modal.present();
-    await modal.onDidDismiss();
+    await modal.present();
+    const { role } = await modal.onDidDismiss();
+    if (role === 'submit') {
+      await this.loadTopicsAfterLogin();
+    }
   }
 
   async openAddReaderModal(topic: Topic) {
