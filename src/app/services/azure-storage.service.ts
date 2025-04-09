@@ -94,17 +94,16 @@
 
     async deleteFile(filePath: string): Promise<void> {
       const containerClient = this.getContainerClient();
-      const blockBlobClient = containerClient.getBlockBlobClient(filePath);
-
+      const blobName = this.extractBlobName(filePath);
+      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    
       try {
         await blockBlobClient.delete();
-        console.log('File deleted successfully from Azure:', filePath);
-
-        // Si c'est un appareil mobile, supprimer également la copie locale
+        console.log('File deleted successfully from Azure:', blobName);
+    
         if (Capacitor.isNativePlatform()) {
           try {
-            // Extraire le nom du fichier
-            const fileName = filePath.split('/').pop();
+            const fileName = blobName.split('/').pop();
             await Filesystem.deleteFile({
               path: `topic_images/${fileName}`,
               directory: Directory.Data
@@ -118,56 +117,19 @@
         throw error;
       }
     }
-
-    // Nouvelle méthode pour obtenir l'URL d'une image qui fonctionne sur mobile et web
-    async getImageUrl(imageUrl: string): Promise<SafeUrl> {
-      if (!imageUrl) return '';
-
-      // Si nous sommes sur le web, utiliser directement l'URL Azure
-      if (!Capacitor.isNativePlatform()) {
-        return this.sanitizer.bypassSecurityTrustUrl(imageUrl);
-      }
-
-      // Sur mobile, essayer d'abord d'accéder à l'image locale
+    
+    private extractBlobName(fileUrl: string): string {
       try {
-        const fileName = imageUrl.split('/').pop()?.split('?')[0];
-
-        if (!fileName) {
-          throw new Error('Invalid file name from URL');
-        }
-
-        // Vérifier si l'image existe localement
-        const localFile = await Filesystem.readFile({
-          path: `topic_images/${fileName}`,
-          directory: Directory.Data
-        });
-
-        // Créer une URL de données à partir du contenu base64
-        const dataUrl = `data:image/jpeg;base64,${localFile.data}`;
-        return this.sanitizer.bypassSecurityTrustUrl(dataUrl);
-
-      } catch (error) {
-        console.warn('Image not found locally, trying to fetch from Azure:', error);
-
-        // Si l'image n'est pas disponible localement, essayer de la télécharger
-        try {
-          const fileName = imageUrl.split('/').pop()?.split('?')[0];
-          if (fileName) {
-            await this.saveImageLocally(imageUrl, fileName);
-            // Réessayer de lire l'image locale
-            const localFile = await Filesystem.readFile({
-              path: `topic_images/${fileName}`,
-              directory: Directory.Data
-            });
-            const dataUrl = `data:image/jpeg;base64,${localFile.data}`;
-            return this.sanitizer.bypassSecurityTrustUrl(dataUrl);
-          }
-        } catch (downloadError) {
-          console.error('Failed to download image:', downloadError);
-        }
-
-        // En dernier recours, essayer l'URL Azure directement
-        return this.sanitizer.bypassSecurityTrustUrl(imageUrl);
+        const url = new URL(fileUrl);
+        return url.pathname.replace(`/${this.containerName}/`, '');
+      } catch (e) {
+        console.error('[extractBlobName] Invalid file URL:', fileUrl);
+        return fileUrl; // fallback
       }
+    }
+    
+
+    async getImageUrl(imageUrl: string): Promise<SafeUrl> {
+      return this.sanitizer.bypassSecurityTrustUrl(imageUrl);
     }
   }

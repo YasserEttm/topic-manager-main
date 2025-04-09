@@ -159,7 +159,7 @@ export class CreatePostModal implements OnInit {
         };
 
         if (this.isRemovingImage) {
-          updatedPost.imageUrl = undefined;
+          delete updatedPost.imageUrl;
         } else if (this.selectedFile && !this.isMobileApp) {
           try {
             updatedPost.imageUrl = await this.topicService.uploadPostImage(this.topicId, this.post.id, this.selectedFile);
